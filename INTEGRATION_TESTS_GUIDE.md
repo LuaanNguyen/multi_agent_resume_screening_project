@@ -436,8 +436,6 @@ jobs:
 
 ## Related Documentation
 
-- **Task 17.1 Summary**: `TASK_17.1_IMPLEMENTATION_SUMMARY.md`
-- **Task 17.2 Summary**: `TASK_17.2_IMPLEMENTATION_SUMMARY.md`
 - **CLI Reference**: `CLI_REFERENCE.md`
 - **Main README**: `README.md`
 

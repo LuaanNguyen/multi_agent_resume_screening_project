@@ -52,9 +52,15 @@ htmlcov/
 
 # Project Specific - Large Files
 output/models/*.pkl
+output/models/vocabulary.json
 output/csv_structured/*.json
 output/pdf_structured/*.json
 *.pkl
+
+# Local planning / generated artifacts
+.kiro/
+TASK_*_IMPLEMENTATION_SUMMARY.md
+TASK_*_COMPLETION_CHECKLIST.md
 
 # Data Files (too large for GitHub)
 archive/data/data/**/*.pdf

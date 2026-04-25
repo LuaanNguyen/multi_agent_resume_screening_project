@@ -146,11 +146,6 @@ multi_agent_resume_screening_project/
 │   ├── config.yaml              # System configuration
 │   ├── skill_aliases.json       # Skill normalization mappings
 │   └── job_categories.json      # Valid job categories
-├── .kiro/specs/                 # Project specifications
-│   └── smart-resume-screening/
-│       ├── requirements.md      # Functional requirements
-│       ├── design.md            # System design document
-│       └── tasks.md             # Implementation plan
 ├── output/                       # Generated outputs
 │   ├── csv_structured/          # Structured resume JSONs (CSV)
 │   ├── pdf_structured/          # Structured resume JSONs (PDF)
@@ -201,10 +196,10 @@ pytest tests/test_skill_extractor.py
 
 ## 📝 Documentation
 
-- **Requirements Document**: `.kiro/specs/smart-resume-screening/requirements.md`
-- **Design Document**: `.kiro/specs/smart-resume-screening/design.md`
-- **Implementation Plan**: `.kiro/specs/smart-resume-screening/tasks.md`
-- **API Documentation**: Comprehensive docstrings in all source files
+- **README**: Project overview and setup instructions
+- **CLI Reference**: `CLI_REFERENCE.md`
+- **API Documentation**: `API_DOCUMENTATION.md`
+- **Integration Tests Guide**: `INTEGRATION_TESTS_GUIDE.md`
 
 ## 🤝 Contributors
 
