@@ -70,6 +70,15 @@ class AssociationMiner:
             f"AssociationMiner initialized with min_support={min_support}, "
             f"min_confidence={min_confidence}"
         )
+
+    def _get_effective_min_support(self, transaction_count: int) -> float:
+        """Raise support for tiny datasets to avoid single-occurrence explosions."""
+        if transaction_count <= 0:
+            raise ValueError("transaction_count must be positive")
+
+        # Itemsets that appear in only one resume are usually noise and can make
+        # Apriori explode on small smoke-test datasets.
+        return max(self.min_support, min(1.0, 2.0 / transaction_count))
     
     def mine_frequent_itemsets(self, transactions: List[List[str]]) -> pd.DataFrame:
         """Find frequent skill sets using Apriori.
@@ -96,9 +105,21 @@ class AssociationMiner:
         if not non_empty_transactions:
             raise ValueError("All transactions are empty")
         
+        transaction_count = len(non_empty_transactions)
+        effective_min_support = self._get_effective_min_support(transaction_count)
+
+        if effective_min_support > self.min_support:
+            logger.warning(
+                "Raised effective min_support from %.3f to %.3f for %d transactions "
+                "so Apriori ignores single-occurrence itemsets",
+                self.min_support,
+                effective_min_support,
+                transaction_count
+            )
+
         logger.info(
-            f"Mining frequent itemsets from {len(non_empty_transactions)} transactions "
-            f"with min_support={self.min_support}"
+            f"Mining frequent itemsets from {transaction_count} transactions "
+            f"with min_support={effective_min_support}"
         )
         
         # Transform transactions to binary matrix
@@ -114,19 +135,20 @@ class AssociationMiner:
         # Apply Apriori algorithm
         frequent_itemsets = apriori(
             df,
-            min_support=self.min_support,
-            use_colnames=True
+            min_support=effective_min_support,
+            use_colnames=True,
+            low_memory=True
         )
         
         if frequent_itemsets.empty:
             logger.warning(
-                f"No frequent itemsets found with min_support={self.min_support}. "
+                f"No frequent itemsets found with min_support={effective_min_support}. "
                 "Consider lowering the threshold."
             )
         else:
             logger.info(
                 f"Found {len(frequent_itemsets)} frequent itemsets "
-                f"(support >= {self.min_support})"
+                f"(support >= {effective_min_support})"
             )
         
         return frequent_itemsets

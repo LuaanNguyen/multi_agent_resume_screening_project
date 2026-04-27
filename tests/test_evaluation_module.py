@@ -102,6 +102,33 @@ class TestEvaluateClassification:
         assert 'C' in metrics.per_class_f1
         assert metrics.per_class_f1['C'] == 0.0
 
+    def test_single_sample_with_unseen_prediction_class(self):
+        """Test evaluation when predictions include a class absent from y_true."""
+        module = EvaluationModule()
+        y_true = np.array(['A'])
+        y_pred = np.array(['B'])
+
+        metrics = module.evaluate_classification(y_true, y_pred)
+
+        assert metrics.accuracy == 0.0
+        assert metrics.macro_f1 == 0.0
+        assert metrics.per_class_f1['A'] == 0.0
+        assert metrics.per_class_f1['B'] == 0.0
+
+    def test_full_class_vocabulary_can_exceed_observed_labels(self):
+        """Test explicit class names for a tiny test split."""
+        module = EvaluationModule()
+        y_true = np.array(['ACCOUNTANT'])
+        y_pred = np.array(['ENGINEERING'])
+        class_names = ['ACCOUNTANT', 'ENGINEERING', 'SALES']
+
+        metrics = module.evaluate_classification(y_true, y_pred, class_names)
+
+        assert set(metrics.per_class_f1) == set(class_names)
+        assert metrics.per_class_f1['ACCOUNTANT'] == 0.0
+        assert metrics.per_class_f1['ENGINEERING'] == 0.0
+        assert metrics.per_class_f1['SALES'] == 0.0
+
 
 class TestEvaluateClustering:
     """Tests for clustering evaluation."""

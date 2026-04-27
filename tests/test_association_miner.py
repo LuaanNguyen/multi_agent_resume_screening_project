@@ -44,6 +44,13 @@ class TestAssociationMinerInit:
 
 class TestMineFrequentItemsets:
     """Test frequent itemset mining."""
+
+    def test_effective_support_ignores_single_occurrence_itemsets_on_tiny_data(self):
+        """Test support floor for tiny datasets."""
+        miner = AssociationMiner(min_support=0.1)
+
+        assert miner._get_effective_min_support(5) == 0.4
+        assert miner._get_effective_min_support(25) == 0.1
     
     def test_mine_simple_transactions(self):
         """Test mining with simple transaction data."""

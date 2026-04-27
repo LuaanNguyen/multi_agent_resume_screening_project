@@ -114,16 +114,23 @@ def config_file(temp_output_dir):
     """Create a temporary config file for testing."""
     config_path = temp_output_dir / "config.yaml"
     config_content = """
-pdf_extractor: pdfplumber
-nlp_model: en_core_web_sm
-embedding_model: all-MiniLM-L6-v2
-fuzzy_threshold: 85
-alias_dict_path: config/skill_aliases.json
-n_clusters: 3
-min_support: 0.1
-min_confidence: 0.5
-test_size: 0.3
-random_state: 42
+processing:
+  pdf_extractor: pdfplumber
+nlp:
+  model: en_core_web_sm
+  embedding_model: all-MiniLM-L6-v2
+skill_normalization:
+  fuzzy_threshold: 85
+  alias_dict_path: config/skill_aliases.json
+ml:
+  classification:
+    test_size: 0.3
+    random_state: 42
+  clustering:
+    n_clusters: 3
+  association:
+    min_support: 0.1
+    min_confidence: 0.5
 """
     config_path.write_text(config_content)
     return str(config_path)
@@ -504,6 +511,18 @@ class TestCrossSourceValidation:
 
 class TestCLIArgumentParsing:
     """Test CLI argument parsing for both data sources."""
+
+    def test_cli_help_runs_without_runtime_dependencies(self):
+        """Test that CLI help works before NLP/ML dependencies are initialized."""
+        result = subprocess.run(
+            [sys.executable, "main.py", "--help"],
+            capture_output=True,
+            text=True,
+            cwd=Path(__file__).resolve().parent.parent
+        )
+        
+        assert result.returncode == 0
+        assert "Available commands" in result.stdout
     
     def test_process_csv_cli_args(self):
         """Test CLI argument parsing for process-csv command."""

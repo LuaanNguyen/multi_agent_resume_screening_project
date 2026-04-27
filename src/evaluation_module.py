@@ -14,8 +14,7 @@ from dataclasses import dataclass, asdict
 from sklearn.metrics import (
     accuracy_score,
     f1_score,
-    silhouette_score,
-    classification_report
+    silhouette_score
 )
 
 logger = logging.getLogger(__name__)
@@ -183,21 +182,41 @@ class EvaluationModule:
         # Calculate overall metrics
         accuracy = accuracy_score(y_true, y_pred)
         macro_f1 = f1_score(y_true, y_pred, average='macro', zero_division=0)
-        
-        # Get unique classes from data if names not provided
+
+        # Resolve the label set explicitly so edge cases like a one-sample test
+        # split still produce aligned per-class metrics.
+        observed_labels = list(np.unique(np.concatenate((y_true, y_pred))))
+
         if class_names is None:
-            # Important: Get labels from both true and pred to avoid IndexError
-            # if the model predicts a class that isn't in y_true
-            class_names = [str(c) for c in np.unique(np.concatenate([y_true, y_pred]))]
-        
-        # Calculate per-class F1 scores
+            evaluation_labels = observed_labels
+            metric_names = [str(label) for label in evaluation_labels]
+        else:
+            observed_label_set = set(observed_labels)
+            if set(class_names).issuperset(observed_label_set):
+                # The caller provided the full label vocabulary.
+                evaluation_labels = class_names
+                metric_names = [str(name) for name in class_names]
+            elif len(class_names) == len(observed_labels):
+                # The caller provided display names that correspond positionally
+                # to the observed labels (for example numeric labels -> names).
+                evaluation_labels = observed_labels
+                metric_names = [str(name) for name in class_names]
+            else:
+                raise ValueError(
+                    "class_names must either match the observed labels or provide "
+                    "one display name per observed class"
+                )
+
         per_class_f1_scores = f1_score(
-            y_true, y_pred, average=None, labels=np.unique(np.concatenate([y_true, y_pred])), zero_division=0
+            y_true,
+            y_pred,
+            average=None,
+            zero_division=0,
+            labels=evaluation_labels
         )
-        
         per_class_f1 = {
-            class_names[i]: float(per_class_f1_scores[i])
-            for i in range(len(per_class_f1_scores))
+            metric_names[i]: float(per_class_f1_scores[i])
+            for i in range(len(metric_names))
         }
         
         logger.info(

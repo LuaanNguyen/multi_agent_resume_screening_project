@@ -65,8 +65,17 @@ class ResumeProcessor:
             fuzzy_threshold=config.fuzzy_threshold
         )
         
-        self.scoring_engine = ScoringEngine(embedding_model=config.embedding_model)
+        self._scoring_engine = None
         logger.info("ResumeProcessor initialization complete")
+
+    @property
+    def scoring_engine(self) -> ScoringEngine:
+        """Load the scoring engine only when scoring is actually requested."""
+        if self._scoring_engine is None:
+            self._scoring_engine = ScoringEngine(
+                embedding_model=self.config.embedding_model
+            )
+        return self._scoring_engine
     
     def _load_alias_dict(self, dict_path: str) -> Dict[str, str]:
         """Load skill alias dictionary from file.

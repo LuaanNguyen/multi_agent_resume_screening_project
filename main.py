@@ -12,22 +12,89 @@ import json
 import pickle
 import sys
 from pathlib import Path
-from typing import Dict, List
-import pandas as pd
-import numpy as np
+from typing import List
 
 from src.models import ProcessorConfig, MLConfig, StructuredResume
-from src.resume_processor import ResumeProcessor
-from src.feature_generator import FeatureGenerator
-from src.classifier import Classifier
-from src.clustering_engine import ClusteringEngine
-from src.association_miner import AssociationMiner
-from src.evaluation_module import EvaluationModule
 from src.logging_config import setup_logging
 
 
 # Setup logging
 logger = logging.getLogger(__name__)
+
+
+# Heavy runtime dependencies are loaded lazily so `python main.py --help`
+# works before the NLP/ML stack is installed and configured.
+ResumeProcessor = None
+FeatureGenerator = None
+Classifier = None
+AssociationMiner = None
+EvaluationModule = None
+
+_RUNTIME_IMPORTS = {
+    "ResumeProcessor": ("src.resume_processor", "ResumeProcessor"),
+    "FeatureGenerator": ("src.feature_generator", "FeatureGenerator"),
+    "Classifier": ("src.classifier", "Classifier"),
+    "AssociationMiner": ("src.association_miner", "AssociationMiner"),
+    "EvaluationModule": ("src.evaluation_module", "EvaluationModule"),
+}
+
+
+def _get_runtime_dependency(name: str):
+    """Load a runtime dependency only when a command actually needs it."""
+    dependency = globals()[name]
+    if dependency is None:
+        module_name, attr_name = _RUNTIME_IMPORTS[name]
+        module = __import__(module_name, fromlist=[attr_name])
+        dependency = getattr(module, attr_name)
+        globals()[name] = dependency
+    return dependency
+
+
+def _get_nested_value(config_data: dict, path: tuple[str, ...]):
+    """Return a nested config value, or None if any path segment is missing."""
+    current = config_data
+    for key in path:
+        if not isinstance(current, dict) or key not in current:
+            return None
+        current = current[key]
+    return current
+
+
+def _get_config_value(
+    config_data: dict,
+    flat_key: str,
+    nested_path: tuple[str, ...],
+    default,
+):
+    """Support both legacy flat config keys and the nested YAML structure."""
+    if flat_key in config_data:
+        return config_data[flat_key]
+
+    nested_value = _get_nested_value(config_data, nested_path)
+    return default if nested_value is None else nested_value
+
+
+def _add_shared_cli_arguments(parser: argparse.ArgumentParser) -> None:
+    """Add CLI arguments that should work before or after the subcommand."""
+    parser.add_argument(
+        '--config',
+        type=str,
+        default='config/config.yaml',
+        help='Path to configuration file (default: config/config.yaml)'
+    )
+    parser.add_argument(
+        '--output-dir',
+        type=str,
+        default='output',
+        help='Output directory for results (default: output)'
+    )
+    parser.add_argument(
+        '--log-level',
+        type=str,
+        default='INFO',
+        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+        help='Logging level (default: INFO)'
+    )
 
 
 def load_config(config_path: str) -> tuple[ProcessorConfig, MLConfig]:
@@ -43,22 +110,75 @@ def load_config(config_path: str) -> tuple[ProcessorConfig, MLConfig]:
     
     try:
         with open(config_path, 'r') as f:
-            config_data = yaml.safe_load(f)
+            config_data = yaml.safe_load(f) or {}
+        
+        if not isinstance(config_data, dict):
+            raise ValueError("Configuration file must contain a YAML mapping")
         
         processor_config = ProcessorConfig(
-            pdf_extractor=config_data.get('pdf_extractor', 'pdfplumber'),
-            nlp_model=config_data.get('nlp_model', 'en_core_web_sm'),
-            embedding_model=config_data.get('embedding_model', 'all-MiniLM-L6-v2'),
-            fuzzy_threshold=config_data.get('fuzzy_threshold', 85),
-            alias_dict_path=config_data.get('alias_dict_path', 'config/skill_aliases.json')
+            pdf_extractor=_get_config_value(
+                config_data,
+                "pdf_extractor",
+                ("processing", "pdf_extractor"),
+                ProcessorConfig.pdf_extractor,
+            ),
+            nlp_model=_get_config_value(
+                config_data,
+                "nlp_model",
+                ("nlp", "model"),
+                ProcessorConfig.nlp_model,
+            ),
+            embedding_model=_get_config_value(
+                config_data,
+                "embedding_model",
+                ("nlp", "embedding_model"),
+                ProcessorConfig.embedding_model,
+            ),
+            fuzzy_threshold=_get_config_value(
+                config_data,
+                "fuzzy_threshold",
+                ("skill_normalization", "fuzzy_threshold"),
+                ProcessorConfig.fuzzy_threshold,
+            ),
+            alias_dict_path=_get_config_value(
+                config_data,
+                "alias_dict_path",
+                ("skill_normalization", "alias_dict_path"),
+                ProcessorConfig.alias_dict_path,
+            ),
         )
         
         ml_config = MLConfig(
-            n_clusters=config_data.get('n_clusters', 10),
-            min_support=config_data.get('min_support', 0.1),
-            min_confidence=config_data.get('min_confidence', 0.5),
-            test_size=config_data.get('test_size', 0.2),
-            random_state=config_data.get('random_state', 42)
+            n_clusters=_get_config_value(
+                config_data,
+                "n_clusters",
+                ("ml", "clustering", "n_clusters"),
+                MLConfig.n_clusters,
+            ),
+            min_support=_get_config_value(
+                config_data,
+                "min_support",
+                ("ml", "association", "min_support"),
+                MLConfig.min_support,
+            ),
+            min_confidence=_get_config_value(
+                config_data,
+                "min_confidence",
+                ("ml", "association", "min_confidence"),
+                MLConfig.min_confidence,
+            ),
+            test_size=_get_config_value(
+                config_data,
+                "test_size",
+                ("ml", "classification", "test_size"),
+                MLConfig.test_size,
+            ),
+            random_state=_get_config_value(
+                config_data,
+                "random_state",
+                ("ml", "classification", "random_state"),
+                MLConfig.random_state,
+            ),
         )
         
         logger.info(f"Configuration loaded from {config_path}")
@@ -99,7 +219,8 @@ def process_csv_command(args):
     processor_config, _ = load_config(args.config)
     
     # Initialize processor
-    processor = ResumeProcessor(processor_config)
+    resume_processor_cls = _get_runtime_dependency("ResumeProcessor")
+    processor = resume_processor_cls(processor_config)
     
     # Process CSV data
     logger.info(f"Processing CSV file: {args.csv_file}")
@@ -124,7 +245,8 @@ def process_pdf_command(args):
     processor_config, _ = load_config(args.config)
     
     # Initialize processor
-    processor = ResumeProcessor(processor_config)
+    resume_processor_cls = _get_runtime_dependency("ResumeProcessor")
+    processor = resume_processor_cls(processor_config)
     
     # Process PDF archive
     logger.info(f"Processing PDF archive: {args.pdf_dir}")
@@ -149,14 +271,18 @@ def train_command(args):
         args: Command-line arguments
     """
     logger.info("=== Starting Model Training ===")
+    import numpy as np
     
     # Load configuration
     processor_config, ml_config = load_config(args.config)
     
     # Initialize components
-    processor = ResumeProcessor(processor_config)
-    feature_gen = FeatureGenerator()
-    classifier = Classifier()
+    resume_processor_cls = _get_runtime_dependency("ResumeProcessor")
+    feature_generator_cls = _get_runtime_dependency("FeatureGenerator")
+    classifier_cls = _get_runtime_dependency("Classifier")
+    processor = resume_processor_cls(processor_config)
+    feature_gen = feature_generator_cls()
+    classifier = classifier_cls()
     
     # Load and process CSV data
     logger.info(f"Loading training data from: {args.csv_file}")
@@ -211,6 +337,7 @@ def evaluate_command(args):
         args: Command-line arguments
     """
     logger.info("=== Starting Model Evaluation ===")
+    import numpy as np
     
     # Load configuration
     processor_config, ml_config = load_config(args.config)
@@ -227,12 +354,15 @@ def evaluate_command(args):
     logger.info("Models loaded successfully")
     
     # Load test data
-    processor = ResumeProcessor(processor_config)
+    resume_processor_cls = _get_runtime_dependency("ResumeProcessor")
+    evaluation_module_cls = _get_runtime_dependency("EvaluationModule")
+    processor = resume_processor_cls(processor_config)
     structured_resumes = processor.process_csv_data(args.csv_file)
     
     # Generate features
     X, _ = feature_gen.generate_feature_matrix(structured_resumes)
     y = np.array([resume.job_category for resume in structured_resumes])
+    all_categories = sorted(set(y.tolist()))
     
     # Split data
     from sklearn.model_selection import train_test_split
@@ -252,13 +382,17 @@ def evaluate_command(args):
     proposed_pred = classifier.predict(X_test, model_type="proposed")
     
     # Evaluate
-    evaluator = EvaluationModule()
+    evaluator = evaluation_module_cls()
     
     logger.info("Evaluating baseline model...")
-    baseline_metrics = evaluator.evaluate_classification(y_test, baseline_pred)
+    baseline_metrics = evaluator.evaluate_classification(
+        y_test, baseline_pred, all_categories
+    )
     
     logger.info("Evaluating proposed model...")
-    proposed_metrics = evaluator.evaluate_classification(y_test, proposed_pred)
+    proposed_metrics = evaluator.evaluate_classification(
+        y_test, proposed_pred, all_categories
+    )
     
     # Compare models
     logger.info("Comparing models...")
@@ -266,7 +400,9 @@ def evaluate_command(args):
     
     # Fairness analysis
     logger.info("Analyzing fairness...")
-    fairness_report = evaluator.analyze_fairness(y_test, proposed_pred, list(set(y)))
+    fairness_report = evaluator.analyze_fairness(
+        y_test, proposed_pred, all_categories
+    )
     
     # Generate and save report
     report = evaluator.generate_report(
@@ -317,8 +453,10 @@ def mine_command(args):
     processor_config, ml_config = load_config(args.config)
     
     # Initialize components
-    processor = ResumeProcessor(processor_config)
-    miner = AssociationMiner(
+    resume_processor_cls = _get_runtime_dependency("ResumeProcessor")
+    association_miner_cls = _get_runtime_dependency("AssociationMiner")
+    processor = resume_processor_cls(processor_config)
+    miner = association_miner_cls(
         min_support=ml_config.min_support,
         min_confidence=ml_config.min_confidence
     )
@@ -356,9 +494,15 @@ def mine_command(args):
     print("="*60)
     
     sorted_rules = sorted(rules, key=lambda r: r.lift, reverse=True)[:10]
-    for i, rule in enumerate(sorted_rules, 1):
-        print(f"\n{i}. {set(rule.antecedents)} => {set(rule.consequents)}")
-        print(f"   Support: {rule.support:.4f}, Confidence: {rule.confidence:.4f}, Lift: {rule.lift:.4f}")
+    if not sorted_rules:
+        print("\nNo association rules met the configured thresholds.")
+    else:
+        for i, rule in enumerate(sorted_rules, 1):
+            print(f"\n{i}. {set(rule.antecedents)} => {set(rule.consequents)}")
+            print(
+                f"   Support: {rule.support:.4f}, "
+                f"Confidence: {rule.confidence:.4f}, Lift: {rule.lift:.4f}"
+            )
     
     print("="*60 + "\n")
 
@@ -375,8 +519,10 @@ def validate_command(args):
     processor_config, ml_config = load_config(args.config)
     
     # Initialize components
-    processor = ResumeProcessor(processor_config)
-    evaluator = EvaluationModule()
+    resume_processor_cls = _get_runtime_dependency("ResumeProcessor")
+    evaluation_module_cls = _get_runtime_dependency("EvaluationModule")
+    processor = resume_processor_cls(processor_config)
+    evaluator = evaluation_module_cls()
     
     # Load CSV data
     logger.info(f"Loading CSV data from: {args.csv_file}")
@@ -435,26 +581,9 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     
-    # Global arguments
-    parser.add_argument(
-        '--config',
-        type=str,
-        default='config/config.yaml',
-        help='Path to configuration file (default: config/config.yaml)'
-    )
-    parser.add_argument(
-        '--output-dir',
-        type=str,
-        default='output',
-        help='Output directory for results (default: output)'
-    )
-    parser.add_argument(
-        '--log-level',
-        type=str,
-        default='INFO',
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
-        help='Logging level (default: INFO)'
-    )
+    # Shared arguments are added to both the root parser and subparsers so users
+    # can place them either before or after the subcommand.
+    _add_shared_cli_arguments(parser)
     
     # Subcommands
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
@@ -464,6 +593,7 @@ def main():
         'process-csv',
         help='Extract and structure resumes from CSV file'
     )
+    _add_shared_cli_arguments(csv_parser)
     csv_parser.add_argument(
         '--csv-file',
         type=str,
@@ -476,6 +606,7 @@ def main():
         'process-pdf',
         help='Extract and structure resumes from PDF archive'
     )
+    _add_shared_cli_arguments(pdf_parser)
     pdf_parser.add_argument(
         '--pdf-dir',
         type=str,
@@ -488,6 +619,7 @@ def main():
         'train',
         help='Train ML models on CSV data'
     )
+    _add_shared_cli_arguments(train_parser)
     train_parser.add_argument(
         '--csv-file',
         type=str,
@@ -500,6 +632,7 @@ def main():
         'evaluate',
         help='Evaluate trained models'
     )
+    _add_shared_cli_arguments(eval_parser)
     eval_parser.add_argument(
         '--csv-file',
         type=str,
@@ -512,6 +645,7 @@ def main():
         'mine',
         help='Run association mining on resume data'
     )
+    _add_shared_cli_arguments(mine_parser)
     mine_parser.add_argument(
         '--csv-file',
         type=str,
@@ -524,6 +658,7 @@ def main():
         'validate',
         help='Run cross-source validation between CSV and PDF data'
     )
+    _add_shared_cli_arguments(validate_parser)
     validate_parser.add_argument(
         '--csv-file',
         type=str,
