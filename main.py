@@ -270,9 +270,8 @@ def evaluate_command(args):
     
     # Generate and save report
     report = evaluator.generate_report(
-        baseline_metrics=baseline_metrics,
-        proposed_metrics=proposed_metrics,
-        comparison=comparison,
+        classification_metrics=proposed_metrics,
+        comparison_report=comparison,
         fairness_report=fairness_report
     )
     

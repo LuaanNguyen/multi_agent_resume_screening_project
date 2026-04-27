@@ -184,14 +184,16 @@ class EvaluationModule:
         accuracy = accuracy_score(y_true, y_pred)
         macro_f1 = f1_score(y_true, y_pred, average='macro', zero_division=0)
         
-        # Calculate per-class F1 scores
-        per_class_f1_scores = f1_score(
-            y_true, y_pred, average=None, zero_division=0
-        )
-        
         # Get unique classes from data if names not provided
         if class_names is None:
-            class_names = [str(c) for c in np.unique(y_true)]
+            # Important: Get labels from both true and pred to avoid IndexError
+            # if the model predicts a class that isn't in y_true
+            class_names = [str(c) for c in np.unique(np.concatenate([y_true, y_pred]))]
+        
+        # Calculate per-class F1 scores
+        per_class_f1_scores = f1_score(
+            y_true, y_pred, average=None, labels=np.unique(np.concatenate([y_true, y_pred])), zero_division=0
+        )
         
         per_class_f1 = {
             class_names[i]: float(per_class_f1_scores[i])

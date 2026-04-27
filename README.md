@@ -88,32 +88,32 @@ The system provides a comprehensive CLI with multiple commands:
 
 #### 1. Process CSV Resumes
 ```bash
-python main.py process-csv --csv-file archive/Resume/Resume.csv --output-dir output
+python main.py --output-dir output process-csv --csv-file archive/Resume/Resume.csv
 ```
 
 #### 2. Process PDF Resumes
 ```bash
-python main.py process-pdf --pdf-dir archive/data/data --output-dir output
+python main.py --output-dir output process-pdf --pdf-dir archive/data/data
 ```
 
 #### 3. Train ML Models
 ```bash
-python main.py train --csv-file archive/Resume/Resume.csv --output-dir output
+python main.py --output-dir output train --csv-file archive/Resume/Resume.csv
 ```
 
 #### 4. Evaluate Models
 ```bash
-python main.py evaluate --csv-file archive/Resume/Resume.csv --output-dir output
+python main.py --output-dir output evaluate --csv-file archive/Resume/Resume.csv
 ```
 
 #### 5. Mine Skill Associations
 ```bash
-python main.py mine --csv-file archive/Resume/Resume.csv --output-dir output
+python main.py --output-dir output mine --csv-file archive/Resume/Resume.csv
 ```
 
 #### 6. Cross-Source Validation
 ```bash
-python main.py validate --csv-file archive/Resume/Resume.csv --pdf-dir archive/data/data --output-dir output
+python main.py --output-dir output validate --csv-file archive/Resume/Resume.csv --pdf-dir archive/data/data
 ```
 
 ### Configuration

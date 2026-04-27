@@ -55,6 +55,7 @@ output/models/*.pkl
 output/models/vocabulary.json
 output/csv_structured/*.json
 output/pdf_structured/*.json
+output/reports/*.json
 *.pkl
 
 # Local planning / generated artifacts
