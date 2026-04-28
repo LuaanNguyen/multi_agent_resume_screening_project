@@ -45,7 +45,7 @@ def test_skill_normalizer_integration():
     
     for input_skill, expected_output in test_cases:
         result = normalizer.normalize_skill(input_skill)
-        status = "✓" if result == expected_output else "✗"
+        status = "[PASS]" if result == expected_output else "[FAIL]"
         print(f"{status} '{input_skill}' -> '{result}' (expected: '{expected_output}')")
         assert result == expected_output, f"Failed: {input_skill} -> {result} (expected {expected_output})"
     
@@ -60,7 +60,7 @@ def test_skill_normalizer_integration():
     expected_normalized = ["JavaScript", "Python", "React", "Machine Learning", "unknownskill"]
     assert normalized == expected_normalized
     
-    print("\n✓ All integration tests passed!")
+    print("\n[PASS] All integration tests passed!")
 
 
 if __name__ == "__main__":

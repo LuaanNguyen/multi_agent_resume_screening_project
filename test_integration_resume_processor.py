@@ -39,7 +39,7 @@ def test_csv_processing():
         print(f"Processing Time: {resume.metadata.processing_time_ms}ms")
         print(f"Sample normalized skills: {resume.normalized_skills[:5]}")
     
-    print("\n✓ CSV processing test passed!")
+    print("\n[PASS] CSV processing test passed!")
     return resumes
 
 
@@ -70,7 +70,7 @@ def test_pdf_processing():
     print(f"Processing Time: {resume.metadata.processing_time_ms}ms")
     print(f"Sample normalized skills: {resume.normalized_skills[:5]}")
     
-    print("\n✓ PDF processing test passed!")
+    print("\n[PASS] PDF processing test passed!")
     return resume
 
 
@@ -104,7 +104,7 @@ def test_cross_validation():
     print(f"Average Length Ratio: {report['average_length_ratio']:.3f}")
     print(f"Average Similarity: {report['average_similarity']:.3f}")
     
-    print("\n✓ Cross-validation test passed!")
+    print("\n[PASS] Cross-validation test passed!")
     return report
 
 
@@ -123,5 +123,5 @@ if __name__ == '__main__':
     validation_report = test_cross_validation()
     
     print("\n" + "=" * 60)
-    print("All integration tests passed! ✓")
+    print("All integration tests passed! [PASS]")
     print("=" * 60)

@@ -1,17 +1,17 @@
 #!/bin/bash
-# Script to run integration tests for Task 17.2
+# Script to run main integration tests
 # Smart Resume Screening System - Main Execution Integration Tests
 
 echo "=========================================="
-echo "Task 17.2: Integration Tests"
+echo "Main Integration Tests"
 echo "=========================================="
 echo ""
 
 # Check if virtual environment exists
 if [ ! -d "venv" ]; then
-    echo "⚠️  Virtual environment not found. Creating one..."
+    echo "[WARN]  Virtual environment not found. Creating one..."
     python3 -m venv venv
-    echo "✅ Virtual environment created"
+    echo "[PASS] Virtual environment created"
 fi
 
 # Activate virtual environment
@@ -22,12 +22,12 @@ source venv/bin/activate
 echo ""
 echo "Checking dependencies..."
 if ! python -c "import spacy" 2>/dev/null; then
-    echo "⚠️  Dependencies not installed. Installing..."
+    echo "[WARN]  Dependencies not installed. Installing..."
     pip install -r requirements.txt
     python -m spacy download en_core_web_sm
-    echo "✅ Dependencies installed"
+    echo "[PASS] Dependencies installed"
 else
-    echo "✅ Dependencies already installed"
+    echo "[PASS] Dependencies already installed"
 fi
 
 echo ""
@@ -49,7 +49,7 @@ echo "=========================================="
 echo ""
 
 if [ $EXIT_CODE -eq 0 ]; then
-    echo "✅ All integration tests passed!"
+    echo "[PASS] All integration tests passed!"
     echo ""
     echo "Test Coverage:"
     echo "  - CSV Processing Pipeline: 4 tests"
@@ -63,7 +63,7 @@ if [ $EXIT_CODE -eq 0 ]; then
     echo "  --------------------------------"
     echo "  Total: 26 integration tests"
 else
-    echo "❌ Some tests failed. Exit code: $EXIT_CODE"
+    echo "[FAIL] Some tests failed. Exit code: $EXIT_CODE"
     echo ""
     echo "To see detailed output, run:"
     echo "  pytest tests/test_main_integration.py -v"

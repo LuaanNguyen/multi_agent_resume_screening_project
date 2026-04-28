@@ -21,27 +21,27 @@ def verify_implementation():
     # Check if spaCy is available
     try:
         import spacy
-        print("✓ spaCy is installed")
+        print("[PASS] spaCy is installed")
         spacy_available = True
     except ImportError:
-        print("✗ spaCy is NOT installed")
+        print("[FAIL] spaCy is NOT installed")
         print("  Install with: pip install spacy")
         spacy_available = False
     
     # Check if the SkillExtractor module can be imported
     try:
         from src.skill_extractor import SkillExtractor, ModelLoadError, SkillExtractionError
-        print("✓ SkillExtractor module imports successfully")
+        print("[PASS] SkillExtractor module imports successfully")
     except ImportError as e:
-        print(f"✗ Failed to import SkillExtractor: {e}")
+        print(f"[FAIL] Failed to import SkillExtractor: {e}")
         return False
     
     # Check if models module is available
     try:
         from src.models import ResumeSections, SkillSet
-        print("✓ Data models import successfully")
+        print("[PASS] Data models import successfully")
     except ImportError as e:
-        print(f"✗ Failed to import data models: {e}")
+        print(f"[FAIL] Failed to import data models: {e}")
         return False
     
     print("\n" + "=" * 70)
@@ -52,7 +52,7 @@ def verify_implementation():
     print("\nSkillExtractor class methods:")
     methods = [m for m in dir(SkillExtractor) if not m.startswith('_')]
     for method in methods:
-        print(f"  ✓ {method}")
+        print(f"  [PASS] {method}")
     
     # Verify required methods exist
     required_methods = [
@@ -65,15 +65,15 @@ def verify_implementation():
     print("\nRequired methods check:")
     for method in required_methods:
         if hasattr(SkillExtractor, method):
-            print(f"  ✓ {method} - implemented")
+            print(f"  [PASS] {method} - implemented")
         else:
-            print(f"  ✗ {method} - MISSING")
+            print(f"  [FAIL] {method} - MISSING")
             return False
     
     # Verify exceptions are defined
     print("\nCustom exceptions check:")
-    print(f"  ✓ ModelLoadError - defined")
-    print(f"  ✓ SkillExtractionError - defined")
+    print(f"  [PASS] ModelLoadError - defined")
+    print(f"  [PASS] SkillExtractionError - defined")
     
     if not spacy_available:
         print("\n" + "=" * 70)
@@ -94,14 +94,14 @@ def verify_implementation():
         # Test initialization
         print("\nTest 1: Initialize SkillExtractor")
         extractor = SkillExtractor()
-        print("  ✓ SkillExtractor initialized successfully")
-        print(f"  ✓ Using model: {extractor.nlp_model}")
+        print("  [PASS] SkillExtractor initialized successfully")
+        print(f"  [PASS] Using model: {extractor.nlp_model}")
         
         # Test explicit skill extraction
         print("\nTest 2: Extract explicit skills")
         skills_text = "Python, Java, Machine Learning, Docker, SQL"
         explicit_skills = extractor.extract_explicit_skills(skills_text)
-        print(f"  ✓ Extracted {len(explicit_skills)} explicit skills")
+        print(f"  [PASS] Extracted {len(explicit_skills)} explicit skills")
         print(f"  Skills: {explicit_skills[:5]}")  # Show first 5
         
         # Test implicit skill extraction
@@ -109,7 +109,7 @@ def verify_implementation():
         experience = "Worked as Software Engineer using Django and React"
         projects = "Built applications with Docker and Kubernetes"
         implicit_skills = extractor.extract_implicit_skills(experience, projects)
-        print(f"  ✓ Extracted {len(implicit_skills)} implicit skills")
+        print(f"  [PASS] Extracted {len(implicit_skills)} implicit skills")
         print(f"  Skills: {implicit_skills[:5]}")  # Show first 5
         
         # Test extract_all_skills
@@ -122,7 +122,7 @@ def verify_implementation():
             raw_text="Full resume text"
         )
         skill_set = extractor.extract_all_skills(sections)
-        print(f"  ✓ Extracted SkillSet successfully")
+        print(f"  [PASS] Extracted SkillSet successfully")
         print(f"  Explicit skills: {len(skill_set.explicit_skills)}")
         print(f"  Implicit skills: {len(skill_set.implicit_skills)}")
         print(f"  Total skills: {len(skill_set.all_skills())}")
@@ -137,7 +137,7 @@ def verify_implementation():
             raw_text=""
         )
         empty_skill_set = extractor.extract_all_skills(empty_sections)
-        print(f"  ✓ Handled empty sections correctly")
+        print(f"  [PASS] Handled empty sections correctly")
         print(f"  Explicit skills: {len(empty_skill_set.explicit_skills)}")
         print(f"  Implicit skills: {len(empty_skill_set.implicit_skills)}")
         
@@ -145,19 +145,19 @@ def verify_implementation():
         print("\nTest 6: Error handling")
         try:
             bad_extractor = SkillExtractor(nlp_model="nonexistent_model")
-            print("  ✗ Should have raised ModelLoadError")
+            print("  [FAIL] Should have raised ModelLoadError")
             return False
         except ModelLoadError as e:
-            print("  ✓ ModelLoadError raised correctly")
+            print("  [PASS] ModelLoadError raised correctly")
             print(f"  Error message: {str(e)[:60]}...")
         
         print("\n" + "=" * 70)
-        print("All tests passed! ✓")
+        print("All tests passed! [PASS]")
         print("=" * 70)
         return True
         
     except Exception as e:
-        print(f"\n✗ Test failed with error: {e}")
+        print(f"\n[FAIL] Test failed with error: {e}")
         import traceback
         traceback.print_exc()
         return False

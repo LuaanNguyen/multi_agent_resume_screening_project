@@ -223,10 +223,12 @@ class TestCSVProcessingPipeline:
         # Verify report structure
         with open(reports_dir / "evaluation_report.json", 'r') as f:
             report = json.load(f)
-            assert 'baseline_metrics' in report
-            assert 'proposed_metrics' in report
-            assert 'comparison' in report
-            assert 'fairness_report' in report
+            assert 'classification' in report
+            assert 'model_comparison' in report
+            assert 'baseline' in report['model_comparison']
+            assert 'proposed' in report['model_comparison']
+            assert 'improvements' in report['model_comparison']
+            assert 'fairness' in report
     
     def test_csv_to_association_mining_pipeline(self, sample_csv_file, temp_output_dir):
         """Test complete pipeline from CSV to association mining."""
@@ -410,7 +412,7 @@ class TestCrossSourceValidation:
             
             # Mock PDF resumes
             pdf_resume = StructuredResume(
-                resume_id="10554236",
+                resume_id="10001",
                 job_category="ACCOUNTANT",
                 sections=ResumeSections(
                     skills="Accounting, Excel",
@@ -477,8 +479,57 @@ class TestCrossSourceValidation:
             mock_evaluator = MockEvaluator.return_value
             
             # Mock minimal data
-            mock_processor.process_csv_data.return_value = []
-            mock_processor.load_from_archive.return_value = {}
+            from src.models import StructuredResume, ResumeSections, SkillSet, ResumeMetadata
+
+            csv_resume = StructuredResume(
+                resume_id="10001",
+                job_category="INFORMATION-TECHNOLOGY",
+                sections=ResumeSections(
+                    skills="Python",
+                    experience="Software Engineer",
+                    education="BS CS",
+                    projects="",
+                    raw_text="CSV text"
+                ),
+                skills=SkillSet(
+                    explicit_skills=["Python"],
+                    implicit_skills=[]
+                ),
+                normalized_skills=["Python"],
+                scores=None,
+                metadata=ResumeMetadata(
+                    file_path="csv",
+                    processed_date="2023-01-01",
+                    processing_time_ms=50
+                )
+            )
+            pdf_resume = StructuredResume(
+                resume_id="10001",
+                job_category="INFORMATION-TECHNOLOGY",
+                sections=ResumeSections(
+                    skills="Python",
+                    experience="Software Engineer",
+                    education="BS CS",
+                    projects="",
+                    raw_text="PDF text"
+                ),
+                skills=SkillSet(
+                    explicit_skills=["Python"],
+                    implicit_skills=[]
+                ),
+                normalized_skills=["Python"],
+                scores=None,
+                metadata=ResumeMetadata(
+                    file_path="test.pdf",
+                    processed_date="2023-01-01",
+                    processing_time_ms=200
+                )
+            )
+
+            mock_processor.process_csv_data.return_value = [csv_resume]
+            mock_processor.load_from_archive.return_value = {
+                "INFORMATION-TECHNOLOGY": [pdf_resume]
+            }
             
             from src.evaluation_module import ExtractionValidationReport
             mock_report = ExtractionValidationReport(

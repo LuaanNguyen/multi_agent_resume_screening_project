@@ -1,5 +1,5 @@
 """
-Demonstration script for Classifier component (Task 12.1).
+Demonstration script for the Classifier component.
 
 This script demonstrates:
 1. Loading CSV data
@@ -20,7 +20,7 @@ from src.models import ProcessorConfig
 
 def main():
     print("=" * 70)
-    print("Classifier Component Demonstration (Task 12.1)")
+    print("Classifier Component Demonstration")
     print("=" * 70)
     
     # Initialize components
@@ -46,12 +46,12 @@ def main():
     # Limit to first 200 to get multiple categories
     structured_resumes = structured_resumes[:200]
     
-    print(f"   ✓ Processed {len(structured_resumes)} resumes")
+    print(f"   [PASS] Processed {len(structured_resumes)} resumes")
     
     # Show category distribution
     categories = [r.job_category for r in structured_resumes]
     unique_categories = set(categories)
-    print(f"   ✓ Job categories: {unique_categories}")
+    print(f"   [PASS] Job categories: {unique_categories}")
     for cat in unique_categories:
         count = categories.count(cat)
         print(f"     - {cat}: {count} resumes")
@@ -61,14 +61,14 @@ def main():
     X, vocabulary = feature_gen.generate_feature_matrix(structured_resumes)
     y = np.array([r.job_category for r in structured_resumes])
     
-    print(f"   ✓ Feature matrix shape: {X.shape}")
-    print(f"   ✓ Vocabulary size: {len(vocabulary)} unique skills")
-    print(f"   ✓ Sample skills: {vocabulary[:10]}")
+    print(f"   [PASS] Feature matrix shape: {X.shape}")
+    print(f"   [PASS] Vocabulary size: {len(vocabulary)} unique skills")
+    print(f"   [PASS] Sample skills: {vocabulary[:10]}")
     
     # Train proposed model
     print("\n4. Training PROPOSED model (Skill features + Random Forest)...")
     classifier.train_proposed(X, y)
-    print(f"   ✓ Model trained with hyperparameters:")
+    print(f"   [PASS] Model trained with hyperparameters:")
     print(f"     - n_estimators: 100")
     print(f"     - max_depth: 20")
     print(f"     - min_samples_split: 5")
@@ -78,7 +78,7 @@ def main():
     print("\n5. Training BASELINE model (TF-IDF + Logistic Regression)...")
     resume_texts = [r.sections.raw_text for r in structured_resumes]
     classifier.train_baseline(resume_texts, y)
-    print(f"   ✓ Model trained with hyperparameters:")
+    print(f"   [PASS] Model trained with hyperparameters:")
     print(f"     - C: 1.0")
     print(f"     - max_iter: 1000")
     print(f"     - solver: lbfgs (multinomial)")
@@ -97,8 +97,8 @@ def main():
     accuracy_proposed = np.mean(predictions_proposed == y)
     accuracy_baseline = np.mean(predictions_baseline == y)
     
-    print(f"   ✓ Proposed model accuracy: {accuracy_proposed:.4f}")
-    print(f"   ✓ Baseline model accuracy: {accuracy_baseline:.4f}")
+    print(f"   [PASS] Proposed model accuracy: {accuracy_proposed:.4f}")
+    print(f"   [PASS] Baseline model accuracy: {accuracy_baseline:.4f}")
     
     # Show sample predictions
     print("\n7. Sample predictions (first 5 resumes):")
@@ -127,16 +127,16 @@ def main():
         print(f"     {cls}: {proba_baseline[0][i]:.4f}")
     
     print("\n" + "=" * 70)
-    print("✓ Demonstration complete!")
+    print("[PASS] Demonstration complete!")
     print("=" * 70)
-    print("\nTask 12.1 Implementation Summary:")
-    print("  ✓ Classifier class created with baseline and proposed models")
-    print("  ✓ __init__() initializes both model types")
-    print("  ✓ train_baseline() uses TF-IDF + Logistic Regression on CSV Resume_str")
-    print("  ✓ train_proposed() uses skill features + Random Forest")
-    print("  ✓ predict() returns job category predictions")
-    print("  ✓ predict_proba() returns confidence scores")
-    print("  ✓ validate_on_pdf_data() tests models on PDF-extracted features")
+    print("\nClassifier capabilities demonstrated:")
+    print("  [PASS] Classifier class created with baseline and proposed models")
+    print("  [PASS] __init__() initializes both model types")
+    print("  [PASS] train_baseline() uses TF-IDF + Logistic Regression on CSV Resume_str")
+    print("  [PASS] train_proposed() uses skill features + Random Forest")
+    print("  [PASS] predict() returns job category predictions")
+    print("  [PASS] predict_proba() returns confidence scores")
+    print("  [PASS] validate_on_pdf_data() tests models on PDF-extracted features")
     print("=" * 70)
 
 

@@ -159,7 +159,7 @@ class FeatureGenerator:
         
         logger.info(
             f"Feature matrix generated: shape {feature_matrix.shape} "
-            f"({feature_matrix.shape[0]} resumes × {feature_matrix.shape[1]} skills)"
+            f"({feature_matrix.shape[0]} resumes x {feature_matrix.shape[1]} skills)"
         )
         
         return feature_matrix, self.vocabulary

@@ -396,24 +396,32 @@ python main.py --log-level DEBUG <command>
 
 ```json
 {
-  "baseline_metrics": {
-    "accuracy": 0.85,
-    "macro_f1": 0.82,
+  "classification": {
+    "accuracy": 0.2857,
+    "macro_f1": 0.2301,
     "per_class_f1": {...}
   },
-  "proposed_metrics": {
-    "accuracy": 0.89,
-    "macro_f1": 0.87,
-    "per_class_f1": {...}
+  "model_comparison": {
+    "baseline": {
+      "accuracy": 0.6258,
+      "macro_f1": 0.5468,
+      "per_class_f1": {...}
+    },
+    "proposed": {
+      "accuracy": 0.2857,
+      "macro_f1": 0.2301,
+      "per_class_f1": {...}
+    },
+    "improvements": {
+      "accuracy": -0.3400,
+      "macro_f1": -0.3167
+    }
   },
-  "comparison": {
-    "accuracy_improvement": 0.04,
-    "f1_improvement": 0.05
-  },
-  "fairness_report": {
-    "mean_f1": 0.87,
-    "f1_variance": 0.02,
-    "flagged_categories": []
+  "fairness": {
+    "mean_f1": 0.2301,
+    "f1_variance": 0.0338,
+    "f1_std": 0.1837,
+    "flagged_categories": ["ADVOCATE", "AGRICULTURE", "ARTS", "AUTOMOBILE", "BPO", "CONSULTANT"]
   }
 }
 ```

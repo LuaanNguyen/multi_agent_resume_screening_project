@@ -4,7 +4,7 @@
 
 An NLP-powered resume processing pipeline that extracts, normalizes, and analyzes resume data from the Kaggle Resume Dataset.
 
-## 🎯 Project Overview
+## Project Overview
 
 This repository currently supports a modular in-process pipeline that:
 - Extracts structured information from CSV and PDF resume sources
@@ -18,7 +18,7 @@ The latest real-data run used the Kaggle Resume Dataset with:
 - 24 job categories
 - 2,483 successfully compared CSV/PDF resumes in the validation run
 
-## ✨ Key Features
+## Key Features
 
 ### Pipeline Components
 - **Text Extraction**: Converts PDF resumes to text using `pdfplumber` with fallback extraction support
@@ -41,7 +41,7 @@ The latest real-data run used the Kaggle Resume Dataset with:
 - **PDF Processing**: Full extraction pipeline validation from `archive/data/data/` organized by job categories
 - **Cross-Validation**: Compares PDF extraction accuracy against CSV ground truth
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 **Core Language**: Python 3.9+
 
@@ -59,7 +59,7 @@ The latest real-data run used the Kaggle Resume Dataset with:
 - `pandas`, `numpy` - Data manipulation
 - `PyYAML` - Configuration management
 
-## 📦 Installation
+## Installation
 
 ### Prerequisites
 - Python 3.9 or higher
@@ -98,7 +98,7 @@ This populates:
 - `archive/Resume/Resume.csv`
 - `archive/data/data/<CATEGORY>/*.pdf`
 
-## 🚀 Usage
+## Usage
 
 ### Command-Line Interface
 
@@ -142,7 +142,7 @@ Edit `config/config.yaml` to customize:
 - Fuzzy matching threshold
 - ML hyperparameters (test split, clustering config, min_support, min_confidence)
 
-## 📊 Project Structure
+## Project Structure
 
 ```
 multi_agent_resume_screening_project/
@@ -174,7 +174,7 @@ multi_agent_resume_screening_project/
 └── README.md                     # This file
 ```
 
-## 🧪 Testing
+## Testing
 
 Run the test suite:
 
@@ -189,9 +189,10 @@ pytest --cov=src --cov-report=html
 pytest tests/test_skill_extractor.py
 ```
 
-**Test Coverage**: 502/504 tests passing (99.6% pass rate)
+The submission was checked with the main CLI integration tests and targeted
+evaluation/association-mining tests listed in `INTEGRATION_TESTS_GUIDE.md`.
 
-## 📈 Latest Real-Data Results
+## Latest Real-Data Results
 
 Artifacts from the latest run are stored in:
 - `output/models/`
@@ -242,22 +243,22 @@ Validation compares successfully processed CSV/PDF pairs by `resume_id`.
 
 Observed metrics:
 - Samples compared: `2483`
-- Text similarity: `0.9979 ± 0.0172`
-- Skill overlap: `0.7575 ± 0.1633`
+- Text similarity: `0.9979 +/- 0.0172`
+- Skill overlap: `0.7575 +/- 0.1633`
 - Extraction accuracy: `0.8777`
 
 Interpretation:
 - PDF text extraction is very close to the CSV text source
 - Skill overlap is materially lower than text similarity, so the skill extraction pipeline is more lossy than raw text extraction
 
-## ⚠️ Current Scope and Limitations
+## Current Scope and Limitations
 
 - The repo name uses "multi-agent", but the shipped implementation is a modular in-process Python pipeline rather than a runtime system of independent agents
 - `src/clustering_engine.py` is implemented and tested, but clustering is not currently exposed through the CLI
 - The scoring engine exists, but normal CLI processing still writes structured resumes with `scores: null`
 - The real-data results above come from the current checked-in pipeline and should be used instead of earlier placeholder claims
 
-## 📝 Documentation
+## Documentation
 
 - **README**: Project overview and setup instructions
 - **Real Data Results**: `REAL_DATA_RESULTS.md`
@@ -265,7 +266,7 @@ Interpretation:
 - **API Documentation**: `API_DOCUMENTATION.md`
 - **Integration Tests Guide**: `INTEGRATION_TESTS_GUIDE.md`
 
-## 🤝 Contributors
+## Contributors
 
 **CSE 572 Group 1**:
 - Luan Nguyen (ltnguy58@asu.edu)
@@ -274,17 +275,17 @@ Interpretation:
 - Kiran Kamalakar (kkamala1@asu.edu)
 - Sai Rithwik Reddy Chirra (schirra7@asu.edu)
 
-## 📄 License
+## License
 
 This is an academic project for CSE 572: Data Mining at Arizona State University.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Dataset: Kaggle Resume Dataset by Snehaan Bhawal
 - Course: CSE 572 - Data Mining, Arizona State University
 - Inspired by research on semantic matching in ATS systems and fairness in algorithmic hiring
 
-## 📧 Contact
+## Contact
 
 For questions or collaboration opportunities, please contact the project team members listed above.
 

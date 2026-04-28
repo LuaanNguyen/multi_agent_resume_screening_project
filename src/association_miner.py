@@ -129,7 +129,7 @@ class AssociationMiner:
         
         logger.debug(
             f"Transaction matrix shape: {df.shape} "
-            f"({df.shape[0]} transactions × {df.shape[1]} unique skills)"
+            f"({df.shape[0]} transactions x {df.shape[1]} unique skills)"
         )
         
         # Apply Apriori algorithm

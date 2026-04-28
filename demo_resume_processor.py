@@ -27,13 +27,13 @@ def main():
         alias_dict_path="config/skill_aliases.json"
     )
     processor = ResumeProcessor(config)
-    print("   ✓ Processor initialized with all components")
+    print("   [PASS] Processor initialized with all components")
     
     # Demo 1: Process CSV data (primary training source)
     print("\n2. Processing resumes from CSV (primary data source)...")
     print("   Loading: archive/Resume/Resume.csv")
     csv_resumes = processor.process_csv_data("archive/Resume/Resume.csv")[:10]
-    print(f"   ✓ Processed {len(csv_resumes)} resumes from CSV")
+    print(f"   [PASS] Processed {len(csv_resumes)} resumes from CSV")
     print(f"   Sample resume: {csv_resumes[0].resume_id}")
     print(f"   - Category: {csv_resumes[0].job_category}")
     print(f"   - Skills extracted: {len(csv_resumes[0].normalized_skills)}")
@@ -46,7 +46,7 @@ def main():
         "archive/data/data/ACCOUNTANT/10554236.pdf",
         job_category="ACCOUNTANT"
     )
-    print(f"   ✓ Processed PDF resume: {pdf_resume.resume_id}")
+    print(f"   [PASS] Processed PDF resume: {pdf_resume.resume_id}")
     print(f"   - Category: {pdf_resume.job_category}")
     print(f"   - Skills extracted: {len(pdf_resume.normalized_skills)}")
     print(f"   - Processing time: {pdf_resume.metadata.processing_time_ms}ms")
@@ -55,7 +55,7 @@ def main():
     print("\n4. Loading resumes by job category from archive...")
     print("   Loading: archive/data/data/ (organized by category)")
     resumes_by_category = processor.load_from_archive("archive/data/data")
-    print(f"   ✓ Loaded resumes from {len(resumes_by_category)} categories")
+    print(f"   [PASS] Loaded resumes from {len(resumes_by_category)} categories")
     for category, resumes in list(resumes_by_category.items())[:3]:
         print(f"   - {category}: {len(resumes)} resumes")
     
@@ -66,7 +66,7 @@ def main():
         csv_path="archive/Resume/Resume.csv",
         max_samples=10
     )
-    print(f"   ✓ Validation complete:")
+    print(f"   [PASS] Validation complete:")
     print(f"   - Samples validated: {validation_report['total_validated']}")
     print(f"   - Success rate: {validation_report['success_rate']:.1%}")
     print(f"   - Avg similarity: {validation_report['average_similarity']:.3f}")
@@ -76,17 +76,17 @@ def main():
     print("\n6. Exporting structured resume to JSON...")
     sample_resume = csv_resumes[0]
     json_output = sample_resume.to_json()
-    print(f"   ✓ Exported resume {sample_resume.resume_id}")
+    print(f"   [PASS] Exported resume {sample_resume.resume_id}")
     print(f"   JSON keys: {list(json_output.keys())}")
     print(f"   Sample skills: {json_output['normalized_skills'][:5]}")
     
     print("\n" + "=" * 70)
     print("Demo complete! ResumeProcessor supports:")
-    print("  ✓ CSV data processing (fast, pre-extracted)")
-    print("  ✓ PDF archive processing (validates extraction)")
-    print("  ✓ Batch processing by job category")
-    print("  ✓ Cross-validation between data sources")
-    print("  ✓ Structured JSON export")
+    print("  [PASS] CSV data processing (fast, pre-extracted)")
+    print("  [PASS] PDF archive processing (validates extraction)")
+    print("  [PASS] Batch processing by job category")
+    print("  [PASS] Cross-validation between data sources")
+    print("  [PASS] Structured JSON export")
     print("=" * 70)
 
 

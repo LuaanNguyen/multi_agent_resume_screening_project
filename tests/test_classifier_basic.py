@@ -1,6 +1,4 @@
-"""
-Basic tests for Classifier component to verify task 12.1 implementation.
-"""
+"""Basic tests for the Classifier component."""
 
 import pytest
 import numpy as np

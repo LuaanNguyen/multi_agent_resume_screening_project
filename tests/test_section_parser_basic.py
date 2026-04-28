@@ -179,24 +179,24 @@ def test_section_boundaries():
 if __name__ == "__main__":
     # Run basic tests
     test_section_parser_initialization()
-    print("✓ Initialization test passed")
+    print("[PASS] Initialization test passed")
     
     test_parse_sections_with_all_sections()
-    print("✓ Parse all sections test passed")
+    print("[PASS] Parse all sections test passed")
     
     test_parse_sections_with_missing_sections()
-    print("✓ Parse missing sections test passed")
+    print("[PASS] Parse missing sections test passed")
     
     test_extract_section_case_insensitive()
-    print("✓ Case insensitive test passed")
+    print("[PASS] Case insensitive test passed")
     
     test_extract_section_with_variations()
-    print("✓ Header variations test passed")
+    print("[PASS] Header variations test passed")
     
     test_extract_section_not_found()
-    print("✓ Section not found test passed")
+    print("[PASS] Section not found test passed")
     
     test_section_boundaries()
-    print("✓ Section boundaries test passed")
+    print("[PASS] Section boundaries test passed")
     
-    print("\n✅ All basic tests passed!")
+    print("\n[PASS] All basic tests passed!")

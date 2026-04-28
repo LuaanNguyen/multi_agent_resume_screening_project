@@ -13,11 +13,11 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Component Dependencies                        │
 ├─────────────────────────────────────────────────────────────────┤
-│  • TextExtractor      - PDF/text extraction & cleaning          │
-│  • SectionParser      - Section detection (Skills, Exp, etc.)   │
-│  • SkillExtractor     - NLP-based skill extraction              │
-│  • SkillNormalizer    - Fuzzy matching normalization            │
-│  • ScoringEngine      - ATS & semantic scoring                  │
+│  - TextExtractor      - PDF/text extraction & cleaning          │
+│  - SectionParser      - Section detection (Skills, Exp, etc.)   │
+│  - SkillExtractor     - NLP-based skill extraction              │
+│  - SkillNormalizer    - Fuzzy matching normalization            │
+│  - ScoringEngine      - ATS & semantic scoring                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -119,11 +119,11 @@ Speedup: 24x faster with CSV
 # CSV Processing (Fast Path)
 processor = ResumeProcessor(config)
 resumes = processor.process_csv_data("archive/Resume/Resume.csv")
-# → 2,484 resumes in ~2 minutes
+# -> 2,484 resumes in ~2 minutes
 
 # PDF Processing (Validation Path)
 resumes_by_cat = processor.load_from_archive("archive/data/data")
-# → Organized by job category, validates extraction
+# -> Organized by job category, validates extraction
 
 # Cross-Validation
 report = processor.cross_validate_data_sources(
@@ -131,7 +131,7 @@ report = processor.cross_validate_data_sources(
     csv_path="archive/Resume/Resume.csv",
     max_samples=100
 )
-# → Validates extraction accuracy: 100% success rate
+# -> Reports text similarity and extraction metrics
 ```
 
 ## Integration with ML Pipeline
@@ -139,11 +139,11 @@ report = processor.cross_validate_data_sources(
 ```
 ResumeProcessor
        │
-       ├─→ CSV Processing ──→ Feature Generator ──→ Classifier Training
-       │                                        └──→ Clustering
-       │                                        └──→ Association Mining
+       ├─-> CSV Processing ──-> Feature Generator ──-> Classifier Training
+       │                                        └──-> Clustering
+       │                                        └──-> Association Mining
        │
-       └─→ PDF Processing ──→ Validation ──→ Extraction Accuracy Report
+       └─-> PDF Processing ──-> Validation ──-> Extraction Accuracy Report
 ```
 
 ## Key Design Decisions
@@ -170,5 +170,5 @@ Integration Tests
 ├─ PDF processing (1 resume)
 └─ Cross-validation (5 samples)
 
-All tests: ✓ PASSED
+Relevant processor checks are covered by unit and integration tests.
 ```

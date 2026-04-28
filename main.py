@@ -604,8 +604,8 @@ def validate_command(args):
     print("="*60)
     print(f"\nExtraction Pipeline Validation:")
     print(f"  Samples Compared: {extraction_report.total_samples}")
-    print(f"  Text Similarity: {extraction_report.text_similarity_mean:.4f} ± {extraction_report.text_similarity_std:.4f}")
-    print(f"  Skill Overlap: {extraction_report.skill_overlap_mean:.4f} ± {extraction_report.skill_overlap_std:.4f}")
+    print(f"  Text Similarity: {extraction_report.text_similarity_mean:.4f} +/- {extraction_report.text_similarity_std:.4f}")
+    print(f"  Skill Overlap: {extraction_report.skill_overlap_mean:.4f} +/- {extraction_report.skill_overlap_std:.4f}")
     print(f"  Extraction Accuracy: {extraction_report.extraction_accuracy:.4f}")
     print("="*60 + "\n")
 

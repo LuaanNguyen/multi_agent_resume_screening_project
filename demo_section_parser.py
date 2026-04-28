@@ -13,21 +13,21 @@ def main():
     Software Engineer | john.doe@email.com | (555) 123-4567
     
     SKILLS
-    • Programming Languages: Python, JavaScript, Java, C++
-    • Frameworks: React, Django, Flask, Node.js
-    • Tools: Git, Docker, Kubernetes, AWS
-    • Machine Learning: TensorFlow, PyTorch, scikit-learn
+    - Programming Languages: Python, JavaScript, Java, C++
+    - Frameworks: React, Django, Flask, Node.js
+    - Tools: Git, Docker, Kubernetes, AWS
+    - Machine Learning: TensorFlow, PyTorch, scikit-learn
     
     EXPERIENCE
     Senior Software Engineer | Tech Corp | 2020 - Present
-    • Led development of microservices architecture serving 1M+ users
-    • Implemented CI/CD pipelines reducing deployment time by 60%
-    • Mentored team of 5 junior developers
+    - Led development of microservices architecture serving 1M+ users
+    - Implemented CI/CD pipelines reducing deployment time by 60%
+    - Mentored team of 5 junior developers
     
     Software Developer | StartupXYZ | 2018 - 2020
-    • Built RESTful APIs using Django and PostgreSQL
-    • Developed React-based dashboard for data visualization
-    • Improved application performance by 40%
+    - Built RESTful APIs using Django and PostgreSQL
+    - Developed React-based dashboard for data visualization
+    - Improved application performance by 40%
     
     EDUCATION
     Master of Science in Computer Science
@@ -40,14 +40,14 @@ def main():
     
     PROJECTS
     E-Commerce Platform (2021)
-    • Built full-stack application using React, Node.js, and MongoDB
-    • Implemented payment processing with Stripe API
-    • Deployed on AWS with auto-scaling capabilities
+    - Built full-stack application using React, Node.js, and MongoDB
+    - Implemented payment processing with Stripe API
+    - Deployed on AWS with auto-scaling capabilities
     
     Machine Learning Pipeline (2020)
-    • Developed automated ML pipeline for customer churn prediction
-    • Achieved 92% accuracy using ensemble methods
-    • Reduced model training time by 50% using distributed computing
+    - Developed automated ML pipeline for customer churn prediction
+    - Achieved 92% accuracy using ensemble methods
+    - Reduced model training time by 50% using distributed computing
     """
     
     print("=" * 80)
@@ -57,12 +57,12 @@ def main():
     
     # Initialize the parser
     parser = SectionParser()
-    print("✓ SectionParser initialized with default patterns")
+    print("[PASS] SectionParser initialized with default patterns")
     print()
     
     # Parse the resume
     sections = parser.parse_sections(sample_resume)
-    print("✓ Resume parsed successfully")
+    print("[PASS] Resume parsed successfully")
     print()
     
     # Display extracted sections
@@ -71,34 +71,34 @@ def main():
     print("-" * 80)
     print()
     
-    print("📋 SKILLS SECTION:")
+    print("SKILLS SECTION:")
     print(sections.skills[:200] + "..." if len(sections.skills) > 200 else sections.skills)
     print()
     
-    print("💼 EXPERIENCE SECTION:")
+    print("EXPERIENCE SECTION:")
     print(sections.experience[:300] + "..." if len(sections.experience) > 300 else sections.experience)
     print()
     
-    print("🎓 EDUCATION SECTION:")
+    print("EDUCATION SECTION:")
     print(sections.education[:200] + "..." if len(sections.education) > 200 else sections.education)
     print()
     
-    print("🚀 PROJECTS SECTION:")
+    print("PROJECTS SECTION:")
     print(sections.projects[:300] + "..." if len(sections.projects) > 300 else sections.projects)
     print()
     
-    # Verify requirements
+    # Verify parser behavior
     print("-" * 80)
-    print("REQUIREMENTS VALIDATION:")
+    print("PARSER CHECKS:")
     print("-" * 80)
     print()
     
-    print("✓ Requirement 3.1: Skills section identified -", "Python" in sections.skills)
-    print("✓ Requirement 3.2: Experience section identified -", "Tech Corp" in sections.experience)
-    print("✓ Requirement 3.3: Education section identified -", "MIT" in sections.education or "Massachusetts" in sections.education)
-    print("✓ Requirement 3.4: Projects section identified -", "E-Commerce" in sections.projects)
-    print("✓ Requirement 3.5: Missing sections handled -", isinstance(sections, ResumeSections))
-    print("✓ Requirement 3.6: Sections output as labeled text segments -", len(sections.raw_text) > 0)
+    print("[PASS] Skills section identified -", "Python" in sections.skills)
+    print("[PASS] Experience section identified -", "Tech Corp" in sections.experience)
+    print("[PASS] Education section identified -", "MIT" in sections.education or "Massachusetts" in sections.education)
+    print("[PASS] Projects section identified -", "E-Commerce" in sections.projects)
+    print("[PASS] Missing sections handled -", isinstance(sections, ResumeSections))
+    print("[PASS] Sections output as labeled text segments -", len(sections.raw_text) > 0)
     print()
     
     # Test with missing sections
@@ -128,7 +128,7 @@ def main():
     print()
     
     print("=" * 80)
-    print("✅ DEMONSTRATION COMPLETE - All requirements satisfied!")
+    print("[PASS] Demonstration complete")
     print("=" * 80)
 
 

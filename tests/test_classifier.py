@@ -1,5 +1,5 @@
 """
-Comprehensive unit tests for Classifier component (Task 12.2).
+Comprehensive unit tests for the Classifier component.
 
 This test suite covers:
 - Baseline model training and prediction on CSV data

@@ -84,7 +84,7 @@ class Classifier:
         X_train_tfidf = self.baseline_vectorizer.fit_transform(resume_texts)
         
         logger.info(
-            f"TF-IDF features: {X_train_tfidf.shape[0]} samples × "
+            f"TF-IDF features: {X_train_tfidf.shape[0]} samples x "
             f"{X_train_tfidf.shape[1]} features"
         )
         
@@ -241,7 +241,7 @@ class Classifier:
             probabilities = self.baseline_model.predict_proba(X_tfidf)
             
             logger.debug(
-                f"Baseline probabilities: {probabilities.shape[0]} samples × "
+                f"Baseline probabilities: {probabilities.shape[0]} samples x "
                 f"{probabilities.shape[1]} classes"
             )
             
@@ -257,7 +257,7 @@ class Classifier:
             probabilities = self.proposed_model.predict_proba(X)
             
             logger.debug(
-                f"Proposed probabilities: {probabilities.shape[0]} samples × "
+                f"Proposed probabilities: {probabilities.shape[0]} samples x "
                 f"{probabilities.shape[1]} classes"
             )
             

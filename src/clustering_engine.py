@@ -108,7 +108,7 @@ class ClusteringEngine:
         
         logger.info(
             f"Retrieved centroids: shape {centroids.shape} "
-            f"({centroids.shape[0]} clusters × {centroids.shape[1]} features)"
+            f"({centroids.shape[0]} clusters x {centroids.shape[1]} features)"
         )
         
         return centroids

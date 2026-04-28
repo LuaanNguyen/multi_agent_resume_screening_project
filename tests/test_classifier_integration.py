@@ -81,7 +81,7 @@ def sample_csv_data(tmp_path):
 
 
 def test_classifier_with_csv_workflow(sample_csv_data):
-    """Test complete workflow: CSV → Features → Training → Prediction."""
+    """Test complete workflow: CSV -> Features -> Training -> Prediction."""
     
     # Initialize components
     config = ProcessorConfig()
@@ -152,7 +152,7 @@ def test_classifier_with_csv_workflow(sample_csv_data):
     assert proba_baseline.shape == (5, 3)
     assert np.allclose(proba_baseline.sum(axis=1), 1.0)
     
-    print("\n✓ Complete workflow test passed!")
+    print("\n[PASS] Complete workflow test passed!")
     print(f"  - Processed {len(structured_resumes)} resumes")
     print(f"  - Vocabulary size: {len(vocabulary)} skills")
     print(f"  - Feature matrix shape: {X.shape}")
@@ -182,7 +182,7 @@ def test_feature_generator_with_csv(sample_csv_data):
     assert X.dtype == np.int8
     assert np.all((X == 0) | (X == 1))
     
-    print("\n✓ CSV feature loading test passed!")
+    print("\n[PASS] CSV feature loading test passed!")
     print(f"  - Feature matrix: {X.shape}")
     print(f"  - Vocabulary: {len(vocabulary)} skills")
 

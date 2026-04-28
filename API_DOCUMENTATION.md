@@ -702,7 +702,7 @@ extraction_report = evaluator.evaluate_extraction_pipeline(
 )
 
 print(f"Extraction accuracy: {extraction_report.extraction_accuracy:.4f}")
-print(f"Text similarity: {extraction_report.text_similarity_mean:.4f} ± {extraction_report.text_similarity_std:.4f}")
+print(f"Text similarity: {extraction_report.text_similarity_mean:.4f} +/- {extraction_report.text_similarity_std:.4f}")
 
 # Cross-validate model performance
 csv_X, csv_vocab = feature_gen.generate_feature_matrix(csv_resumes)

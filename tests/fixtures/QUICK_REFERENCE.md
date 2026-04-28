@@ -1,6 +1,6 @@
 # Test Fixtures Quick Reference
 
-## 📁 Directory Structure
+## Directory Structure
 
 ```
 tests/fixtures/
@@ -11,7 +11,7 @@ tests/fixtures/
 └── validation_data/             # PDF-CSV mapping
 ```
 
-## 🔧 Available Fixtures
+## Available Fixtures
 
 | Fixture Name | Returns | Usage |
 |--------------|---------|-------|
@@ -24,7 +24,7 @@ tests/fixtures/
 | `load_job_requirements` | Function to load job reqs | `load_job_requirements("accountant")` |
 | `load_expected_output` | Function to load expected | `load_expected_output("accountant")` |
 
-## 📝 Sample Data Keys
+## Sample Data Keys
 
 ### PDF Resumes
 - `"accountant"` - CPA with 8+ years
@@ -40,7 +40,7 @@ tests/fixtures/
 - `"software_developer"` - Developer job
 - `"nurse"` - Nurse job
 
-## 🚀 Quick Examples
+## Quick Examples
 
 ### Load CSV Data
 ```python
@@ -77,7 +77,7 @@ def test_validation(validation_mapping):
     mappings = data["mappings"]  # 3 mappings
 ```
 
-## 📊 CSV Data Structure
+## CSV Data Structure
 
 | ID | Category | Content |
 |----|----------|---------|
@@ -87,7 +87,7 @@ def test_validation(validation_mapping):
 | TEST004 | ENGINEERING | Robert Lee, Mechanical skills |
 | TEST005 | SALES | Lisa Anderson, Sales skills |
 
-## ✅ Validation
+## Validation
 
 Run fixture tests:
 ```bash
@@ -96,13 +96,13 @@ python3 -m pytest tests/test_fixtures.py -v
 
 Expected: 33 tests pass
 
-## 📚 Full Documentation
+## Full Documentation
 
 - **README.md** - Overview and structure
 - **USAGE_GUIDE.md** - Detailed examples and patterns
 - **QUICK_REFERENCE.md** - This file
 
-## 💡 Tips
+## Tips
 
 1. Use fixtures instead of hardcoded paths
 2. Leverage helper functions (`load_*`)
@@ -110,7 +110,7 @@ Expected: 33 tests pass
 4. Validate cross-source consistency
 5. Check `test_fixtures.py` for examples
 
-## 🔗 Related Files
+## Related Files
 
 - `tests/conftest.py` - Fixture definitions
 - `tests/test_fixtures.py` - Fixture validation tests

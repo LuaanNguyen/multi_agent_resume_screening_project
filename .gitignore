@@ -58,10 +58,7 @@ output/pdf_structured/*.json
 output/reports/*.json
 *.pkl
 
-# Local planning / generated artifacts
-.kiro/
-TASK_*_IMPLEMENTATION_SUMMARY.md
-TASK_*_COMPLETION_CHECKLIST.md
+# Local generated artifacts
 
 # Data Files (too large for GitHub)
 archive/data/data/**/*.pdf
