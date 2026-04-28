@@ -14,7 +14,7 @@ import csv
 import json
 from pathlib import Path
 from src.resume_processor import ResumeProcessor
-from src.models import ProcessorConfig, StructuredResume
+from src.models import ProcessorConfig, StructuredResume, ResumeSections, SkillSet, ResumeMetadata
 
 
 @pytest.fixture
@@ -298,47 +298,79 @@ class TestBatchProcessing:
 
 class TestArchiveLoading:
     """Test archive loading with job category organization."""
+
+    @pytest.fixture
+    def sample_pdf_archive(self, tmp_path):
+        """Create a small category-organized PDF archive for structure tests."""
+        archive_dir = tmp_path / "archive"
+        for category in ["ACCOUNTANT", "INFORMATION-TECHNOLOGY"]:
+            category_dir = archive_dir / category
+            category_dir.mkdir(parents=True)
+            for resume_id in ["resume_1", "resume_2"]:
+                (category_dir / f"{resume_id}.pdf").write_bytes(b"%PDF-1.4\n")
+
+        return archive_dir
+
+    def _stub_processed_resume(self, file_path, job_category=None, resume_id=None):
+        """Return a minimal StructuredResume without parsing a real PDF."""
+        return StructuredResume(
+            resume_id=resume_id or Path(file_path).stem,
+            job_category=job_category or "UNKNOWN",
+            sections=ResumeSections(
+                raw_text="Sample resume text",
+                skills="Python, Excel",
+                experience="Sample experience",
+                education="Sample education",
+                projects=""
+            ),
+            skills=SkillSet(
+                explicit_skills=["Python", "Excel"],
+                implicit_skills=[]
+            ),
+            normalized_skills=["Python", "Excel"],
+            scores=None,
+            metadata=ResumeMetadata(
+                file_path=file_path,
+                processed_date="2024-01-01T00:00:00",
+                processing_time_ms=1
+            )
+        )
     
-    def test_load_from_archive_structure(self, processor):
+    def test_load_from_archive_structure(self, processor, sample_pdf_archive, monkeypatch):
         """Test loading resumes from archive organized by job categories."""
-        archive_path = "archive/data/data"
-        
-        if not Path(archive_path).exists():
-            pytest.skip(f"Archive path not found: {archive_path}")
-        
-        # Load from archive (limit to 2 categories, 2 files each for speed)
-        results = processor.load_from_archive(archive_path)
+        monkeypatch.setattr(processor, "process_resume", self._stub_processed_resume)
+
+        results = processor.load_from_archive(str(sample_pdf_archive))
         
         # Verify structure
         assert isinstance(results, dict)
-        assert len(results) > 0
+        assert set(results) == {"ACCOUNTANT", "INFORMATION-TECHNOLOGY"}
         
         # Verify each category has resumes
         for category, resumes in results.items():
             assert isinstance(resumes, list)
-            assert len(resumes) > 0
+            assert len(resumes) == 2
             
             # Verify each resume has correct category
             for resume in resumes:
                 assert resume.job_category == category
     
-    def test_archive_preserves_category_organization(self, processor):
+    def test_archive_preserves_category_organization(
+        self,
+        processor,
+        sample_pdf_archive,
+        monkeypatch
+    ):
         """Test that archive loading preserves job category organization."""
-        archive_path = "archive/data/data"
-        
-        if not Path(archive_path).exists():
-            pytest.skip(f"Archive path not found: {archive_path}")
-        
-        results = processor.load_from_archive(archive_path)
+        monkeypatch.setattr(processor, "process_resume", self._stub_processed_resume)
+
+        results = processor.load_from_archive(str(sample_pdf_archive))
         
         # Verify categories match directory structure
-        expected_categories = [
-            'ACCOUNTANT', 'ADVOCATE', 'AGRICULTURE', 'APPAREL',
-            'ARTS', 'AUTOMOBILE', 'AVIATION', 'BANKING'
-        ]
+        expected_categories = ['ACCOUNTANT', 'INFORMATION-TECHNOLOGY']
         
         for category in expected_categories:
-            category_path = Path(archive_path) / category
+            category_path = sample_pdf_archive / category
             if category_path.exists():
                 assert category in results
                 assert len(results[category]) > 0
