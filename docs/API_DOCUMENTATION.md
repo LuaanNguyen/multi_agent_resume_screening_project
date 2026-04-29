@@ -886,8 +886,4 @@ validation_report = processor.cross_validate_data_sources(
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2025  
-**Status**: Complete
-
-For additional support, see the main [README.md](README.md) file or check the system logs for detailed error information.
+For additional support, see the root [README.md](../README.md) file or check the system logs for detailed error information.

@@ -19,12 +19,13 @@ order:
 
 | File | Purpose |
 | --- | --- |
-| `README.md` | Project overview, setup, workflow, latest results, and limitations |
-| `REAL_DATA_RESULTS.md` | Detailed metrics from the latest real Kaggle dataset run |
-| `CLI_REFERENCE.md` | Full command reference for every supported CLI command |
-| `RESUME_PROCESSOR_ARCHITECTURE.md` | How the resume processing pipeline is organized |
-| `API_DOCUMENTATION.md` | Developer-facing module and API notes |
-| `INTEGRATION_TESTS_GUIDE.md` | Test coverage and integration test workflow |
+| [`README.md`](README.md) | Project overview, setup, workflow, latest results, and limitations |
+| [`docs/README.md`](docs/README.md) | Documentation index |
+| [`docs/REAL_DATA_RESULTS.md`](docs/REAL_DATA_RESULTS.md) | Detailed metrics from the latest real Kaggle dataset run |
+| [`docs/CLI_REFERENCE.md`](docs/CLI_REFERENCE.md) | Full command reference for every supported CLI command |
+| [`docs/RESUME_PROCESSOR_ARCHITECTURE.md`](docs/RESUME_PROCESSOR_ARCHITECTURE.md) | How the resume processing pipeline is organized |
+| [`docs/API_DOCUMENTATION.md`](docs/API_DOCUMENTATION.md) | Developer-facing module and API notes |
+| [`docs/INTEGRATION_TESTS_GUIDE.md`](docs/INTEGRATION_TESTS_GUIDE.md) | Test coverage and integration test workflow |
 
 ## What The Project Does
 
@@ -189,7 +190,8 @@ Writes `output/reports/validation_report.json`.
 ## Latest Real-Data Results
 
 These are the latest verified metrics from the current checked-in code on the
-Kaggle dataset. See `REAL_DATA_RESULTS.md` for the longer breakdown.
+Kaggle dataset. See [`docs/REAL_DATA_RESULTS.md`](docs/REAL_DATA_RESULTS.md) for
+the longer breakdown.
 
 ### Classification
 
@@ -280,11 +282,13 @@ multi_agent_resume_screening_project/
 |-- setup_dataset.py
 |-- requirements.txt
 |-- README.md
-|-- REAL_DATA_RESULTS.md
-|-- CLI_REFERENCE.md
-|-- RESUME_PROCESSOR_ARCHITECTURE.md
-|-- API_DOCUMENTATION.md
-`-- INTEGRATION_TESTS_GUIDE.md
+`-- docs/
+    |-- README.md
+    |-- REAL_DATA_RESULTS.md
+    |-- CLI_REFERENCE.md
+    |-- RESUME_PROCESSOR_ARCHITECTURE.md
+    |-- API_DOCUMENTATION.md
+    `-- INTEGRATION_TESTS_GUIDE.md
 ```
 
 Generated local folders such as `archive/` and `output/` are ignored by Git and

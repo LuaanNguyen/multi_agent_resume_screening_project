@@ -488,6 +488,6 @@ python main.py --log-level DEBUG <command>
 
 For issues or questions:
 1. Check this reference guide
-2. Review README.md
+2. Review the root `README.md`
 3. Check logs with `--log-level DEBUG`
-4. Review design.md for architecture details
+4. Review [`RESUME_PROCESSOR_ARCHITECTURE.md`](RESUME_PROCESSOR_ARCHITECTURE.md) for architecture details
