@@ -1,298 +1,343 @@
-# Multi-Agent Resume Screening & Skill Mining System
+# Multi-Agent Resume Screening and Skill Mining System
 
 **CSE 572: Data Mining - Academic Project**
 
-An NLP-powered resume processing pipeline that extracts, normalizes, and analyzes resume data from the Kaggle Resume Dataset.
+This project is a Python command-line pipeline for processing resumes from the
+Kaggle Resume Dataset. It extracts text and skills, trains job-category
+classifiers, mines skill associations, clusters resumes, and validates PDF
+extraction against CSV resume text.
 
-## Project Overview
+The repository name includes "multi-agent", but the submitted implementation is
+a modular in-process Python pipeline. The main value of the project is the data
+mining workflow around resume parsing, classification, association mining,
+clustering, and extraction validation.
 
-This repository currently supports a modular in-process pipeline that:
-- Extracts structured information from CSV and PDF resume sources
-- Parses resume sections and normalizes extracted skills
-- Trains and evaluates job-category classifiers
-- Mines association rules from normalized skill data
-- Validates PDF extraction quality against CSV ground truth
+## Start Here
 
-The latest real-data run used the Kaggle Resume Dataset with:
-- 2,484 CSV resumes
-- 24 job categories
-- 2,483 successfully compared CSV/PDF resumes in the validation run
+If you are reviewing this project for the first time, read these files in this
+order:
 
-## Key Features
+| File | Purpose |
+| --- | --- |
+| `README.md` | Project overview, setup, workflow, latest results, and limitations |
+| `REAL_DATA_RESULTS.md` | Detailed metrics from the latest real Kaggle dataset run |
+| `CLI_REFERENCE.md` | Full command reference for every supported CLI command |
+| `RESUME_PROCESSOR_ARCHITECTURE.md` | How the resume processing pipeline is organized |
+| `API_DOCUMENTATION.md` | Developer-facing module and API notes |
+| `INTEGRATION_TESTS_GUIDE.md` | Test coverage and integration test workflow |
 
-### Pipeline Components
-- **Text Extraction**: Converts PDF resumes to text using `pdfplumber` with fallback extraction support
-- **Section Parsing**: Divides resumes into logical sections (Skills, Experience, Education, Projects)
-- **Skill Extraction**: Uses spaCy NLP to identify explicit and implicit skills
-- **Skill Normalization**: Standardizes skill variations using fuzzy matching (`RapidFuzz`)
-- **Scoring Engine**: ATS and semantic scoring module exists in `src/scoring_engine.py`, but normal CLI processing currently saves structured resumes with `scores: null`
+## What The Project Does
 
-### CLI-Supported Analysis
-- **Classification**: Trains a TF-IDF + Logistic Regression baseline and a hybrid text-plus-skill proposed model
-- **Association Mining**: Discovers co-occurring normalized tokens using Apriori after default transaction cleanup
-- **Clustering**: Groups resumes with K-Means from CSV or PDF sources and writes aggregate and per-resume reports
-- **Fairness Analysis**: Evaluates per-category F1 for the proposed classifier
-- **Cross-Source Validation**: Compares PDF-extracted text/skills against CSV ground truth
+The system takes resumes from two sources:
 
-### Dual Data Source Support
-- **CSV Processing**: Fast processing using pre-extracted text from `archive/Resume/Resume.csv`
-- **PDF Processing**: Full extraction pipeline validation from `archive/data/data/` organized by job categories
-- **Cross-Validation**: Compares PDF extraction accuracy against CSV ground truth
+- A CSV file containing pre-extracted resume text
+- PDF files organized by job category
 
-## Technology Stack
+It then:
 
-**Core Language**: Python 3.9+
+1. Extracts text from resumes.
+2. Splits resume text into sections such as skills, experience, education, and
+   projects.
+3. Extracts and normalizes skills.
+4. Trains and evaluates job-category classifiers.
+5. Mines frequent skill co-occurrence patterns.
+6. Clusters resumes based on extracted features.
+7. Compares PDF extraction output against CSV text as a validation check.
 
-**NLP & ML Libraries**:
-- `spaCy` 3.x - NER for skill extraction
-- `sentence-transformers` - Semantic embeddings (all-MiniLM-L6-v2)
-- `scikit-learn` - Classification, clustering, TF-IDF
-- `mlxtend` - Apriori algorithm for association mining
+## Dataset
 
-**Text Processing**:
-- `pdfplumber` - PDF text extraction
-- `RapidFuzz` - Fuzzy string matching
+Dataset: Kaggle Resume Dataset by Snehaan Bhawal
 
-**Data Processing**:
-- `pandas`, `numpy` - Data manipulation
-- `PyYAML` - Configuration management
+Dataset link:
+<https://www.kaggle.com/datasets/snehaanbhawal/resume-dataset>
+
+The latest local run used:
+
+- `2484` CSV resumes
+- `2484` PDF files in the archive
+- `24` job categories
+- `2483` successfully compared CSV/PDF resume pairs during validation
+
+One PDF in the local archive could not be read by the extraction libraries and
+was skipped during validation. The pipeline handles this case and still
+completes.
+
+## What Is Tracked In Git
+
+The GitHub submission tracks source code, tests, configuration, and
+documentation.
+
+The following are intentionally not tracked because they are large or generated:
+
+- `archive/` dataset files
+- `output/` generated JSON reports, structured resumes, and models
+- `.venv/` virtual environment
+- Python caches and test caches
+
+Run the setup and pipeline commands below to recreate the local dataset and
+outputs.
 
 ## Installation
 
 ### Prerequisites
+
 - Python 3.9 or higher
-- pip package manager
+- pip
+- Kaggle access for downloading the dataset
 
-### Setup Instructions
+### Setup
 
-1. **Clone the repository**
 ```bash
 git clone https://github.com/Karthikp0152/multi_agent_resume_screening_project.git
 cd multi_agent_resume_screening_project
-```
 
-2. **Create virtual environment**
-```bash
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-```
+source .venv/bin/activate
 
-3. **Install dependencies**
-```bash
 pip install -r requirements.txt
-```
-
-4. **Download spaCy model**
-```bash
 python -m spacy download en_core_web_sm
-```
-
-5. **Download and organize the Kaggle dataset**
-```bash
 python setup_dataset.py
 ```
 
-This populates:
+On Windows, activate the environment with:
+
+```bash
+.venv\Scripts\activate
+```
+
+`setup_dataset.py` downloads and organizes the dataset into:
+
 - `archive/Resume/Resume.csv`
 - `archive/data/data/<CATEGORY>/*.pdf`
 
-## Usage
+## Main Workflow
 
-### Command-Line Interface
+Run commands from the repository root.
 
-The CLI commands below match the workflow that currently runs successfully in this repo:
+### 1. Process CSV resumes
 
-#### 1. Process CSV Resumes
 ```bash
 python main.py --output-dir output process-csv --csv-file archive/Resume/Resume.csv
 ```
 
-#### 2. Process PDF Resumes
+Writes structured resume JSON files to `output/csv_structured/`.
+
+### 2. Process PDF resumes
+
 ```bash
 python main.py --output-dir output process-pdf --pdf-dir archive/data/data
 ```
 
-#### 3. Train ML Models
+Writes structured PDF-derived resume JSON files to `output/pdf_structured/`.
+
+### 3. Train classifiers
+
 ```bash
 python main.py --output-dir output train --csv-file archive/Resume/Resume.csv
 ```
 
-#### 4. Evaluate Models
+Trains:
+
+- Baseline model: raw-text TF-IDF + Logistic Regression
+- Proposed model: hybrid raw-text TF-IDF + normalized-skill features +
+  Logistic Regression
+
+Model artifacts are written to `output/models/`.
+
+### 4. Evaluate classifiers
+
 ```bash
 python main.py --output-dir output evaluate --csv-file archive/Resume/Resume.csv
 ```
 
-#### 5. Mine Skill Associations
+Writes `output/reports/evaluation_report.json`.
+
+### 5. Mine skill associations
+
 ```bash
 python main.py --output-dir output mine --csv-file archive/Resume/Resume.csv
 ```
 
-#### 6. Cluster Resumes
+Writes `output/reports/association_rules.json`.
+
+The mining step removes obvious resume header/contact/location artifacts before
+running Apriori.
+
+### 6. Cluster resumes
+
 ```bash
 python main.py --output-dir output cluster --source csv --csv-file archive/Resume/Resume.csv
 python main.py --output-dir output cluster --source pdf --pdf-dir archive/data/data
 ```
 
-#### 7. Cross-Source Validation
+Writes:
+
+- `output/reports/cluster_report.json`
+- `output/reports/cluster_assignments.json`
+
+The second cluster command overwrites the same report paths with the PDF-source
+result.
+
+### 7. Validate PDF extraction against CSV text
+
 ```bash
 python main.py --output-dir output validate --csv-file archive/Resume/Resume.csv --pdf-dir archive/data/data
 ```
 
-### Configuration
-
-Edit `config/config.yaml` to customize:
-- PDF extraction method (pdfplumber/pypdf)
-- NLP model selection
-- Fuzzy matching threshold
-- ML hyperparameters (test split, clustering config, min_support, min_confidence)
-
-## Project Structure
-
-```
-multi_agent_resume_screening_project/
-├── src/                          # Source code
-│   ├── text_extractor.py        # PDF/text extraction
-│   ├── section_parser.py        # Resume section parsing
-│   ├── skill_extractor.py       # NLP-based skill extraction
-│   ├── skill_normalizer.py      # Skill normalization
-│   ├── scoring_engine.py        # ATS & semantic scoring
-│   ├── feature_generator.py     # ML feature engineering
-│   ├── classifier.py            # Job category classification
-│   ├── clustering_engine.py     # K-Means clustering
-│   ├── association_miner.py     # Apriori association mining
-│   ├── evaluation_module.py     # Performance & fairness evaluation
-│   ├── resume_processor.py      # Pipeline orchestrator
-│   └── models.py                # Data models & schemas
-├── tests/                        # Unit & integration tests
-├── config/                       # Configuration files
-│   ├── config.yaml              # System configuration
-│   ├── skill_aliases.json       # Skill normalization mappings
-│   └── job_categories.json      # Valid job categories
-├── output/                       # Generated outputs
-│   ├── csv_structured/          # Structured resume JSONs (CSV)
-│   ├── pdf_structured/          # Structured resume JSONs (PDF)
-│   ├── models/                  # Trained ML models
-│   └── reports/                 # Evaluation reports
-├── main.py                       # CLI entry point
-├── requirements.txt              # Python dependencies
-└── README.md                     # This file
-```
-
-## Testing
-
-Run the test suite:
-
-```bash
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=src --cov-report=html
-
-# Run specific test file
-pytest tests/test_skill_extractor.py
-```
-
-The submission was checked with the main CLI integration tests and targeted
-evaluation/association-mining tests listed in `INTEGRATION_TESTS_GUIDE.md`.
+Writes `output/reports/validation_report.json`.
 
 ## Latest Real-Data Results
 
-Artifacts from the latest run are stored in:
-- `output/models/`
-- `output/reports/evaluation_report.json`
-- `output/reports/association_rules.json`
-- `output/reports/cluster_report.json`
-- `output/reports/cluster_assignments.json`
-- `output/reports/validation_report.json`
+These are the latest verified metrics from the current checked-in code on the
+Kaggle dataset. See `REAL_DATA_RESULTS.md` for the longer breakdown.
 
-### Classification Evaluation
-
-Config used:
-- test split: `0.2`
-- random state: `42`
-
-Observed metrics on the real dataset:
+### Classification
 
 | Model | Accuracy | Macro F1 |
 | --- | ---: | ---: |
 | Baseline: TF-IDF + Logistic Regression | 0.6258 | 0.5468 |
 | Proposed: Hybrid Text + Skill Logistic Regression | 0.4165 | 0.3685 |
 
-Important note:
-- In the current implementation, the baseline model outperformed the proposed hybrid model on the Kaggle dataset
+Finding:
 
-Proposed-model fairness analysis:
-- Mean per-category F1: `0.3685`
-- F1 standard deviation: `0.1870`
-- Flagged low-performing categories: `AGRICULTURE`, `APPAREL`, `ARTS`, `BPO`, `CONSULTANT`
-
-Top proposed-model categories by F1:
-- `CHEF`: `0.7391`
-- `CONSTRUCTION`: `0.6441`
-- `ACCOUNTANT`: `0.6182`
-- `TEACHER`: `0.5455`
-- `INFORMATION-TECHNOLOGY`: `0.5246`
+- The baseline classifier outperformed the proposed hybrid classifier in the
+  latest real-data run.
+- The proposed model is still useful as an experiment, but the project should
+  not claim it improves over the baseline.
 
 ### Association Mining
 
-The latest cleaned rule output contains `0` rules at the configured thresholds:
+At the configured thresholds:
+
 - `min_support`: `0.1`
 - `min_confidence`: `0.5`
-- Non-empty cleaned transactions: `2482`
-- Frequent itemsets found before confidence filtering: `21`
+- Rules found: `0`
 
-Important note:
-- Default mining cleanup now removes obvious resume header/contact/location artifacts before Apriori. With the current confidence threshold, no rules met the threshold on the full dataset.
+Finding:
+
+- The cleaned transactions produced frequent itemsets, but no rules met the
+  configured confidence threshold on the full dataset.
 
 ### Clustering
 
-CSV source clustering with `10` requested clusters:
+CSV source:
+
 - Samples clustered: `2484`
 - Actual clusters: `10`
 - Silhouette score: `0.1024`
 - Cluster sizes: `158`, `1`, `461`, `372`, `1`, `1`, `2`, `1`, `1`, `1486`
 
-PDF source clustering with `10` requested clusters:
+PDF source:
+
 - Samples clustered: `2483`
 - Actual clusters: `10`
 - Silhouette score: `0.1620`
 - Cluster sizes: `1`, `442`, `1`, `246`, `1`, `1`, `1`, `1788`, `1`, `1`
 
-Important note:
-- The clustering report is useful for exploration, but both real-data runs produced one dominant cluster and several singleton clusters. Treat the cluster output as exploratory rather than validated category discovery.
+Finding:
+
+- Clustering works as an exploratory feature, but the current feature space
+  creates one dominant cluster and several singleton or near-singleton clusters.
 
 ### Cross-Source Validation
 
-Validation compares successfully processed CSV/PDF pairs by `resume_id`.
+CSV/PDF validation results:
 
-Observed metrics:
 - Samples compared: `2483`
 - Text similarity: `0.9979 +/- 0.0172`
 - Skill overlap: `0.7575 +/- 0.1633`
 - Extraction accuracy: `0.8777`
 
-Interpretation:
-- PDF text extraction is very close to the CSV text source
-- Skill overlap is materially lower than text similarity, so the skill extraction pipeline is more lossy than raw text extraction
+Finding:
 
-## Current Scope and Limitations
+- PDF text extraction closely matches the CSV text source.
+- Skill extraction is less stable than raw text extraction, which is reflected
+  in the lower skill-overlap score.
 
-- The repo name uses "multi-agent", but the shipped implementation is a modular in-process Python pipeline rather than a runtime system of independent agents
-- The scoring engine exists, but normal CLI processing still writes structured resumes with `scores: null`
-- The real-data results above come from the current checked-in pipeline and should be used instead of earlier placeholder claims
+## Project Structure
 
-## Documentation
+```text
+multi_agent_resume_screening_project/
+|-- config/
+|   |-- config.yaml
+|   |-- job_categories.json
+|   `-- skill_aliases.json
+|-- src/
+|   |-- association_miner.py
+|   |-- classifier.py
+|   |-- clustering_engine.py
+|   |-- evaluation_module.py
+|   |-- feature_generator.py
+|   |-- models.py
+|   |-- resume_processor.py
+|   |-- scoring_engine.py
+|   |-- section_parser.py
+|   |-- skill_extractor.py
+|   |-- skill_normalizer.py
+|   `-- text_extractor.py
+|-- tests/
+|-- main.py
+|-- setup_dataset.py
+|-- requirements.txt
+|-- README.md
+|-- REAL_DATA_RESULTS.md
+|-- CLI_REFERENCE.md
+|-- RESUME_PROCESSOR_ARCHITECTURE.md
+|-- API_DOCUMENTATION.md
+`-- INTEGRATION_TESTS_GUIDE.md
+```
 
-- **README**: Project overview and setup instructions
-- **Real Data Results**: `REAL_DATA_RESULTS.md`
-- **CLI Reference**: `CLI_REFERENCE.md`
-- **API Documentation**: `API_DOCUMENTATION.md`
-- **Integration Tests Guide**: `INTEGRATION_TESTS_GUIDE.md`
+Generated local folders such as `archive/` and `output/` are ignored by Git and
+are recreated by the setup and pipeline commands.
+
+## Technology Stack
+
+- Python 3.9+
+- spaCy for NLP preprocessing
+- pdfplumber and pypdf for PDF text extraction
+- RapidFuzz for fuzzy skill normalization
+- pandas and numpy for data handling
+- scikit-learn for TF-IDF, classification, and clustering
+- mlxtend for Apriori association mining
+- PyYAML for configuration loading
+
+## Testing
+
+Run all tests:
+
+```bash
+pytest
+```
+
+Run the main targeted checks:
+
+```bash
+python -m py_compile main.py src/*.py tests/*.py setup_dataset.py
+pytest tests/test_main_integration.py tests/test_evaluation_module.py tests/test_association_miner.py -q
+```
+
+The most recent full local verification passed:
+
+- `518` tests passed
+- `5` warnings
+
+## Current Scope And Limitations
+
+- The implementation is a local Python CLI pipeline, not a deployed web
+  application.
+- The project name says "multi-agent", but the current implementation is not a
+  runtime system of independent agents.
+- The scoring engine exists in `src/scoring_engine.py`, but normal CLI
+  processing currently saves structured resumes with `scores: null`.
+- The proposed hybrid classifier does not outperform the baseline on the latest
+  real-data run.
+- Association mining returns no rules at the default confidence threshold.
+- Clustering output is exploratory and currently imbalanced.
 
 ## Contributors
 
-**CSE 572 Group 1**:
+**CSE 572 Group 1**
+
 - Luan Nguyen (ltnguy58@asu.edu)
 - Karthik Ponugoti (kponugo2@asu.edu)
 - Krish Naik (knaik13@asu.edu)
@@ -301,18 +346,12 @@ Interpretation:
 
 ## License
 
-This is an academic project for CSE 572: Data Mining at Arizona State University.
+This is an academic project for CSE 572: Data Mining at Arizona State
+University.
 
 ## Acknowledgments
 
 - Dataset: Kaggle Resume Dataset by Snehaan Bhawal
 - Course: CSE 572 - Data Mining, Arizona State University
-- Inspired by research on semantic matching in ATS systems and fairness in algorithmic hiring
-
-## Contact
-
-For questions or collaboration opportunities, please contact the project team members listed above.
-
----
-
-**Note**: This project demonstrates the application of data mining techniques to real-world resume screening challenges, addressing limitations of traditional keyword-based ATS systems through semantic understanding and fairness analysis.
+- Research context: semantic resume matching, skill extraction, association
+  mining, clustering, and fairness analysis in automated resume screening
