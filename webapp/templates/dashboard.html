@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Resume Screening Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Local dashboard</p>
+          <h1>Resume Screening Pipeline</h1>
+          <p>
+            Run the existing CLI workflow locally and review the latest reports
+            generated under the selected output directory.
+          </p>
+        </div>
+        <a class="button secondary" href="/reports?output_dir={{ defaults.output_dir }}">Open Reports</a>
+      </section>
+
+      <section class="grid status-grid">
+        <article class="card">
+          <span class="label">CSV dataset</span>
+          <strong>{{ "Available" if status.csv_exists else "Missing" }}</strong>
+          <small>{{ defaults.csv_file }}</small>
+        </article>
+        <article class="card">
+          <span class="label">PDF archive</span>
+          <strong>{{ "Available" if status.pdf_dir_exists else "Missing" }}</strong>
+          <small>{{ defaults.pdf_dir }}</small>
+        </article>
+        <article class="card">
+          <span class="label">Models</span>
+          <strong>{{ "Available" if status.models_exist else "Not trained" }}</strong>
+          <small>{{ defaults.output_dir }}/models</small>
+        </article>
+        <article class="card">
+          <span class="label">Reports</span>
+          <strong>{{ status.report_count }}</strong>
+          <small>{{ defaults.output_dir }}/reports</small>
+        </article>
+      </section>
+
+      <section class="panel command-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Pipeline controls</p>
+            <h2>Run local commands</h2>
+          </div>
+          <p>Only one job runs at a time so model and report files do not collide.</p>
+        </div>
+
+        <form id="job-form" class="controls">
+          <label>
+            Config path
+            <input name="config_path" value="{{ defaults.config_path }}">
+          </label>
+          <label>
+            Output dir
+            <input name="output_dir" value="{{ defaults.output_dir }}">
+          </label>
+          <label>
+            CSV file
+            <input name="csv_file" value="{{ defaults.csv_file }}">
+          </label>
+          <label>
+            PDF dir
+            <input name="pdf_dir" value="{{ defaults.pdf_dir }}">
+          </label>
+          <label>
+            Clusters
+            <input name="n_clusters" placeholder="optional">
+          </label>
+        </form>
+
+        <div class="button-row">
+          {% for command, label in [
+            ("process-csv", "Process CSV"),
+            ("process-pdf", "Process PDF"),
+            ("train", "Train"),
+            ("evaluate", "Evaluate"),
+            ("mine", "Mine"),
+            ("cluster-csv", "Cluster CSV"),
+            ("cluster-pdf", "Cluster PDF"),
+            ("validate", "Validate")
+          ] %}
+            <button class="button" type="button" data-command="{{ command }}">{{ label }}</button>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="grid metrics-grid">
+        <article class="metric-card">
+          <span class="label">Baseline Accuracy</span>
+          <strong>
+            {% if reports.summary.baseline.accuracy is number %}
+              {{ "%.4f"|format(reports.summary.baseline.accuracy) }}
+            {% else %}
+              Not available
+            {% endif %}
+          </strong>
+          <small>TF-IDF + Logistic Regression</small>
+        </article>
+        <article class="metric-card">
+          <span class="label">Proposed Accuracy</span>
+          <strong>
+            {% if reports.summary.proposed.accuracy is number %}
+              {{ "%.4f"|format(reports.summary.proposed.accuracy) }}
+            {% else %}
+              Not available
+            {% endif %}
+          </strong>
+          <small>Hybrid text plus skill features</small>
+        </article>
+        <article class="metric-card">
+          <span class="label">Association Rules</span>
+          <strong>
+            {{ reports.summary.association_rule_count if reports.summary.association_rule_count is not none else "Not available" }}
+          </strong>
+          <small>Rules at configured thresholds</small>
+        </article>
+        <article class="metric-card">
+          <span class="label">Validation Accuracy</span>
+          <strong>
+            {% if reports.summary.validation.extraction_accuracy is number %}
+              {{ "%.4f"|format(reports.summary.validation.extraction_accuracy) }}
+            {% else %}
+              Not available
+            {% endif %}
+          </strong>
+          <small>CSV/PDF extraction comparison</small>
+        </article>
+      </section>
+
+      {% if reports.summary.proposed_underperforms %}
+        <section class="notice">
+          The latest report shows the proposed hybrid model underperforming the
+          baseline model. Keep report wording grounded in that result.
+        </section>
+      {% endif %}
+
+      <section class="grid two-column">
+        <article class="panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Cluster report</p>
+              <h2>Latest clustering</h2>
+            </div>
+          </div>
+          {% if reports.summary.cluster.sample_count %}
+            <dl class="facts">
+              <dt>Source</dt>
+              <dd>{{ reports.summary.cluster.source }}</dd>
+              <dt>Samples</dt>
+              <dd>{{ reports.summary.cluster.sample_count }}</dd>
+              <dt>Actual clusters</dt>
+              <dd>{{ reports.summary.cluster.actual_cluster_count }}</dd>
+              <dt>Silhouette</dt>
+              <dd>{{ "%.4f"|format(reports.summary.cluster.silhouette_score) }}</dd>
+            </dl>
+          {% else %}
+            <p class="muted">Cluster report is not available yet.</p>
+          {% endif %}
+        </article>
+
+        <article class="panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Jobs</p>
+              <h2>Recent local runs</h2>
+            </div>
+          </div>
+          <div id="job-status" class="job-status">
+            {% if jobs %}
+              {% for job in jobs[:5] %}
+                <div class="job-line">
+                  <strong>{{ job.command }}</strong>
+                  <span>{{ job.status }}</span>
+                </div>
+              {% endfor %}
+            {% else %}
+              <p class="muted">No jobs have run in this server session.</p>
+            {% endif %}
+          </div>
+          <pre id="job-log" class="log" aria-live="polite"></pre>
+        </article>
+      </section>
+    </main>
+
+    <script>
+      const form = document.querySelector("#job-form");
+      const statusBox = document.querySelector("#job-status");
+      const logBox = document.querySelector("#job-log");
+
+      async function pollJob(jobId) {
+        const response = await fetch(`/jobs/${jobId}`);
+        const job = await response.json();
+        statusBox.innerHTML = `<div class="job-line"><strong>${job.command}</strong><span>${job.status}</span></div>`;
+        logBox.textContent = [job.stdout, job.stderr, job.error].filter(Boolean).join("\\n\\n");
+        if (job.status === "running") {
+          window.setTimeout(() => pollJob(jobId), 1500);
+        }
+      }
+
+      document.querySelectorAll("[data-command]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          logBox.textContent = "Starting job...";
+          const data = new FormData(form);
+          const response = await fetch(`/jobs/${button.dataset.command}`, {
+            method: "POST",
+            body: data
+          });
+          const payload = await response.json();
+          if (!response.ok) {
+            logBox.textContent = payload.detail || "Failed to start job.";
+            return;
+          }
+          pollJob(payload.id);
+        });
+      });
+    </script>
+  </body>
+</html>

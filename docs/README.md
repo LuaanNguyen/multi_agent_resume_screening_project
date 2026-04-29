@@ -14,6 +14,18 @@ the files here provide deeper implementation, command, and result details.
 | [`API_DOCUMENTATION.md`](API_DOCUMENTATION.md) | Developer-facing module and class details |
 | [`INTEGRATION_TESTS_GUIDE.md`](INTEGRATION_TESTS_GUIDE.md) | Integration test scope and commands |
 
+## Local Web Dashboard
+
+The project includes an optional FastAPI dashboard over the same CLI pipeline.
+Start it from the repository root:
+
+```bash
+python -m uvicorn webapp.app:app --reload
+```
+
+Then open `http://127.0.0.1:8000`. The dashboard displays generated report
+files and can launch the existing local pipeline commands.
+
 ## Local Generated Files
 
 Generated files are intentionally kept outside Git:

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pipeline Reports</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Reports</p>
+          <h1>Latest Pipeline Results</h1>
+          <p>Readable view of JSON reports from {{ output_dir }}/reports.</p>
+        </div>
+        <a class="button secondary" href="/">Back to Dashboard</a>
+      </section>
+
+      <section class="grid two-column">
+        <article class="panel">
+          <h2>Classification</h2>
+          {% if reports.summary.baseline %}
+            <table>
+              <thead>
+                <tr>
+                  <th>Model</th>
+                  <th>Accuracy</th>
+                  <th>Macro F1</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Baseline</td>
+                  <td>{{ "%.4f"|format(reports.summary.baseline.accuracy) }}</td>
+                  <td>{{ "%.4f"|format(reports.summary.baseline.macro_f1) }}</td>
+                </tr>
+                <tr>
+                  <td>Proposed hybrid</td>
+                  <td>{{ "%.4f"|format(reports.summary.proposed.accuracy) }}</td>
+                  <td>{{ "%.4f"|format(reports.summary.proposed.macro_f1) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          {% else %}
+            <p class="muted">Evaluation report is not available yet.</p>
+          {% endif %}
+        </article>
+
+        <article class="panel">
+          <h2>Validation</h2>
+          {% if reports.summary.validation.extraction_accuracy is number %}
+            <dl class="facts">
+              <dt>Samples compared</dt>
+              <dd>{{ reports.summary.validation.total_samples }}</dd>
+              <dt>Text similarity</dt>
+              <dd>{{ "%.4f"|format(reports.summary.validation.text_similarity_mean) }}</dd>
+              <dt>Skill overlap</dt>
+              <dd>{{ "%.4f"|format(reports.summary.validation.skill_overlap_mean) }}</dd>
+              <dt>Extraction accuracy</dt>
+              <dd>{{ "%.4f"|format(reports.summary.validation.extraction_accuracy) }}</dd>
+            </dl>
+          {% else %}
+            <p class="muted">Validation report is not available yet.</p>
+          {% endif %}
+        </article>
+      </section>
+
+      <section class="grid two-column">
+        <article class="panel">
+          <h2>Association Mining</h2>
+          {% if reports.summary.association_rule_count is not none %}
+            <p>Rules found: <strong>{{ reports.summary.association_rule_count }}</strong></p>
+          {% else %}
+            <p class="muted">Association report is not available yet.</p>
+          {% endif %}
+        </article>
+
+        <article class="panel">
+          <h2>Clustering</h2>
+          {% if reports.summary.cluster.sample_count %}
+            <dl class="facts">
+              <dt>Source</dt>
+              <dd>{{ reports.summary.cluster.source }}</dd>
+              <dt>Samples</dt>
+              <dd>{{ reports.summary.cluster.sample_count }}</dd>
+              <dt>Actual clusters</dt>
+              <dd>{{ reports.summary.cluster.actual_cluster_count }}</dd>
+              <dt>Silhouette</dt>
+              <dd>{{ "%.4f"|format(reports.summary.cluster.silhouette_score) }}</dd>
+            </dl>
+          {% else %}
+            <p class="muted">Cluster report is not available yet.</p>
+          {% endif %}
+        </article>
+      </section>
+
+      <section class="panel">
+        <h2>Report File Status</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Report</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for key, value in reports.errors.items() %}
+              <tr>
+                <td>{{ key }}</td>
+                <td>{{ value }}</td>
+              </tr>
+            {% endfor %}
+            {% if not reports.errors %}
+              <tr>
+                <td>All known reports</td>
+                <td>Available</td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </body>
+</html>

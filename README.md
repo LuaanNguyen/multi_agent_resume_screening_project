@@ -187,6 +187,21 @@ python main.py --output-dir output validate --csv-file archive/Resume/Resume.csv
 
 Writes `output/reports/validation_report.json`.
 
+## Local Web Dashboard
+
+The same workflow can be run from a local web dashboard:
+
+```bash
+python -m uvicorn webapp.app:app --reload
+```
+
+Then open `http://127.0.0.1:8000`.
+
+The dashboard shows dataset/report availability, the latest evaluation,
+association, clustering, and validation results, and local buttons for running
+the existing CLI commands. Generated outputs still go under `output/` and remain
+ignored by Git.
+
 ## Latest Real-Data Results
 
 These are the latest verified metrics from the current checked-in code on the
@@ -278,6 +293,7 @@ multi_agent_resume_screening_project/
 |   |-- skill_normalizer.py
 |   `-- text_extractor.py
 |-- tests/
+|-- webapp/
 |-- main.py
 |-- setup_dataset.py
 |-- requirements.txt
@@ -304,6 +320,7 @@ are recreated by the setup and pipeline commands.
 - scikit-learn for TF-IDF, classification, and clustering
 - mlxtend for Apriori association mining
 - PyYAML for configuration loading
+- FastAPI, Jinja2, and Uvicorn for the optional local dashboard
 
 ## Testing
 

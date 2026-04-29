@@ -24,6 +24,18 @@ python main.py --help
 python main.py train --help
 ```
 
+## Optional Local Dashboard
+
+The repository also includes a local web dashboard that runs these same CLI
+commands through buttons and displays the generated report JSON files.
+
+```bash
+python -m uvicorn webapp.app:app --reload
+```
+
+Open `http://127.0.0.1:8000` after the server starts. The dashboard is a local
+interface over the CLI and writes to the same ignored `output/` directory.
+
 ## Commands
 
 ### 1. process-csv
