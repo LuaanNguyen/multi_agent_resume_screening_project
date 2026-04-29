@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Resume Screening Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}?v=dashboard-spacing">
   </head>
   <body>
     <main class="shell">
@@ -91,12 +91,18 @@
         </div>
 
         <div id="run-progress" class="run-progress" aria-live="polite" hidden>
-          <div class="progress-copy">
-            <strong id="progress-title">Pipeline job running</strong>
-            <span id="progress-state">Waiting for status</span>
+          <div class="loader-visual" aria-hidden="true">
+            <span class="loader-ring"></span>
+            <span class="loader-bars">
+              <i></i>
+              <i></i>
+              <i></i>
+              <i></i>
+            </span>
           </div>
-          <div class="progress-track">
-            <span></span>
+          <div class="progress-copy">
+            <strong id="progress-title">Pipeline job</strong>
+            <span id="progress-state">Waiting for status</span>
           </div>
         </div>
       </section>
@@ -229,8 +235,8 @@
       function setControlsRunning(activeCommand) {
         progressBox.hidden = false;
         progressBox.className = "run-progress is-running";
-        progressTitle.textContent = `Running ${activeCommand}`;
-        progressState.textContent = "The local pipeline is working. This can take several minutes on the real dataset.";
+        progressTitle.textContent = activeCommand;
+        progressState.textContent = "Running";
         commandButtons.forEach((button) => {
           button.disabled = true;
           button.classList.toggle("is-running", button.dataset.command === activeCommand);

@@ -65,6 +65,8 @@ def test_dashboard_pages_return_200(tmp_path):
     assert dashboard.status_code == 200
     assert "Recommended flow" in dashboard.text
     assert "run-progress" in dashboard.text
+    assert "loader-ring" in dashboard.text
+    assert "loader-bars" in dashboard.text
     assert "Process CSV" in dashboard.text
     assert "Validate" in dashboard.text
 

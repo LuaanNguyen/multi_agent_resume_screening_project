@@ -59,6 +59,8 @@ output/reports/*.json
 *.pkl
 
 # Local generated artifacts
+output/
+output-*/
 
 # Data Files (too large for GitHub)
 archive/data/data/**/*.pdf
