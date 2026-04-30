@@ -165,7 +165,7 @@ We describe the system as five logical agents. These are not separate services; 
 
 \textbf{Section Parsing Agent.} This component uses regular expressions and heuristics to identify common resume sections such as skills, experience, education, and projects. Missing sections are represented with empty strings so that later pipeline stages can still run.
 
-\textbf{Skill Extraction Agent.} This component uses spaCy's \texttt{en\_core\_web\_sm} model and noun-phrase/entity heuristics to extract candidate skills. Skills from the skills section are treated as explicit skills, while skills inferred from experience and project text are treated as implicit skills.
+\textbf{Skill Extraction Agent.} This component uses spaCy's small English model together with noun-phrase and entity heuristics to extract candidate skills. Skills from the skills section are treated as explicit skills, while skills inferred from experience and project text are treated as implicit skills.
 
 \textbf{Skill Normalization Agent.} This component maps raw skill mentions to canonical terms using a curated alias dictionary and RapidFuzz fuzzy matching with threshold 85. If no match is found, the cleaned original term is retained.
 
@@ -187,7 +187,7 @@ Each resume's normalized skill list is treated as a transaction. Before mining, 
 
 \subsection{Clustering}
 
-The repository exposes a \texttt{cluster} CLI command for both CSV and PDF sources. K-Means clustering is applied to binary normalized-skill vectors with $k=10$ from the configuration. The command writes an aggregate \texttt{cluster\_report.json} and per-resume \texttt{cluster\_assignments.json}. Cluster labels are cleaned to avoid obvious resume header/contact artifacts. We treat clustering as exploratory because the resulting clusters are highly imbalanced.
+The repository exposes a \texttt{cluster} CLI command for both CSV and PDF sources. K-Means clustering is applied to binary normalized-skill vectors with $k=10$ from the configuration. The command writes one aggregate JSON report and one per-resume assignment JSON file. Cluster labels are cleaned to avoid obvious resume header/contact artifacts. We treat clustering as exploratory because the resulting clusters are highly imbalanced.
 
 \subsection{Evaluation Metrics}
 
