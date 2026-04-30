@@ -1,0 +1,463 @@
+\documentclass[sigconf, authorversion, nonacm]{acmart}
+\settopmatter{printacmref=false}
+\setcopyright{none}
+
+% Packages
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{microtype}
+\usepackage{balance}
+\usepackage{url}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\graphicspath{{docs/figures/}{../figures/}}
+
+% Document metadata
+\title{Multi-Agent Resume Screening and Skill Mining System}
+
+\author{Luan Nguyen}
+\affiliation{\institution{Arizona State University}\city{Tempe}\state{AZ}\country{USA}}
+\email{ltnguy58@asu.edu}
+
+\author{Karthik Ponugoti}
+\affiliation{\institution{Arizona State University}\city{Tempe}\state{AZ}\country{USA}}
+\email{kponugo2@asu.edu}
+
+\author{Krish Naik}
+\affiliation{\institution{Arizona State University}\city{Tempe}\state{AZ}\country{USA}}
+\email{knaik13@asu.edu}
+
+\author{Kiran Kamalakar}
+\affiliation{\institution{Arizona State University}\city{Tempe}\state{AZ}\country{USA}}
+\email{kkamala1@asu.edu}
+
+\author{Sai Rithwik Reddy Chirra}
+\affiliation{\institution{Arizona State University}\city{Tempe}\state{AZ}\country{USA}}
+\email{schirra7@asu.edu}
+
+\keywords{Resume screening, skill extraction, NLP, association mining,
+K-Means clustering, fairness analysis, job classification, ATS}
+
+\begin{document}
+
+\begin{abstract}
+Applicant tracking systems often rely on keyword matching, which can miss qualified candidates who describe similar experience using different wording. This project implements a modular resume screening and skill mining pipeline for the Kaggle Resume Dataset. The system processes CSV resume text and PDF resumes, parses resume sections, extracts and normalizes skills, trains job-category classifiers, mines skill associations, clusters resumes, and validates PDF extraction against CSV text. We describe the system as multi-agent in the sense of five logical in-process agents: section parsing, skill extraction, skill normalization, ATS-style scoring, and semantic scoring. In the current command-line workflow, scoring modules are implemented but normal structured resume outputs still store \texttt{scores: null}; therefore, the main experiments focus on classification, association mining, clustering, and cross-source validation. On 2,484 CSV resumes across 24 job categories, a raw-text TF-IDF + Logistic Regression baseline outperforms the proposed hybrid text-plus-skill Logistic Regression model, achieving 0.6258 accuracy and 0.5468 Macro F1 compared with 0.4165 accuracy and 0.3685 Macro F1. Association mining finds 21 frequent itemsets but zero rules at the configured confidence threshold. K-Means clustering runs on both CSV and PDF sources but produces imbalanced exploratory clusters. Cross-source validation across 2,483 matched CSV/PDF pairs shows high text similarity (0.9979) and moderate skill overlap (0.7575). These results show that the end-to-end pipeline works, while also identifying skill extraction quality and feature design as the main areas for future improvement.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+
+Automated resume screening is common in modern hiring pipelines. Applicant tracking systems help recruiters process large applicant pools, but simple keyword matching can reject candidates whose resumes use different wording from a job posting even when the underlying experience is similar. For example, a candidate who writes ``led a cross-functional team'' may demonstrate a capability similar to ``people management experience,'' but a strict keyword system may treat these phrases as unrelated.
+
+Prior work has shown that this is not only a retrieval problem but also a fairness problem. Fofanah describes how semantic mismatch can reduce the recall of qualified candidates in keyword-based systems~\cite{fofanah2026}. Dastin reports that Amazon discontinued an internal recruiting tool after it showed bias against women~\cite{dastin2018}. These examples motivate systems that are more transparent about what they extract, how they classify resumes, and where they fail.
+
+This project presents a modular resume screening and skill mining system. The original idea was a multi-agent pipeline: different agents would parse the resume, extract skills, normalize terms, score candidate-job matches, and support downstream data mining. The implemented repository follows this idea as an in-process Python pipeline rather than as separate autonomous services. This distinction matters for accurate reporting: the project is modular and agent-style, but it is not a deployed distributed multi-agent system.
+
+The main contributions are:
+
+\begin{itemize}
+  \item A modular resume processing pipeline that converts CSV and PDF resumes into structured JSON profiles with parsed sections, explicit skills, implicit skills, normalized skills, and metadata.
+  \item A comparison between a TF-IDF + Logistic Regression baseline and a proposed hybrid text-plus-skill Logistic Regression classifier across 24 job categories.
+  \item Association mining over cleaned skill transactions using Apriori to test whether common skill bundles appear at the corpus level.
+  \item K-Means clustering over normalized skill feature vectors for exploratory grouping of resumes from both CSV and PDF sources.
+  \item Cross-source validation comparing PDF-extracted resumes with CSV ground truth across 2,483 matched resume pairs.
+  \item A local command-line workflow and FastAPI dashboard that run the same pipeline and display generated reports.
+\end{itemize}
+
+The results are intentionally reported conservatively. The baseline classifier outperformed the proposed hybrid model, association mining found no rules at the configured confidence threshold, and clustering produced one dominant cluster with several singleton or near-singleton clusters. These are useful findings because they show where the current implementation works and where it needs improvement.
+
+\section{Related Work}
+
+Automated resume analysis has developed through several stages: rule-based keyword matching, machine-learning classification, semantic embedding methods, and more recent large-model extraction pipelines. A related line of work studies fairness and bias in algorithmic hiring.
+
+\subsection{Traditional Rule-Based and Keyword-Matching Systems}
+
+Early resume screening systems treated matching as overlap between resume keywords and job-description keywords. A simple ATS-style recall score can be written as:
+
+\begin{equation}
+    \text{ATS}(r, j) = \frac{|S_r \cap S_j|}{|S_j|}
+\end{equation}
+
+\noindent where $S_r$ is the set of skills extracted from a resume and $S_j$ is the set of required skills from a job description. Barducci et al. presented a framework for segmenting resumes and extracting structured information~\cite{barducci2022}. These systems are interpretable, but they remain sensitive to surface wording and may miss semantic equivalence.
+
+\subsection{Deep Learning and Transformer-Based Extraction}
+
+Transformer models have been applied to resume and job-market text because they can capture richer language patterns than exact matching. Vukadin et al. presented a multilingual CV information extraction system using BERT-based models~\cite{vukadin2021}. Senger et al. surveyed deep learning methods for skill extraction and classification from job postings, noting that labeled data scarcity and implicit skill mentions remain challenges~\cite{senger2024}.
+
+\subsection{Semantic Matching and Large-Model Pipelines}
+
+Semantic systems move from lexical overlap to vector similarity. Fofanah proposed JobOS, which uses vector embeddings for candidate-job matching and reports improved recall and F1 relative to traditional keyword matching~\cite{fofanah2026}. Related work such as Skills2Graph connects job text to structured skill graphs~\cite{giabelli2021}. More recent systems use LLMs as extraction components. Luo et al. introduced OneKE for schema-guided knowledge extraction~\cite{luo2025}; Malandri et al. presented SkiLLMo for normalized ESCO skill extraction~\cite{malandri2025}; and Khelkhal and Lanasri proposed Smart-Hiring for explainable CV extraction and job matching~\cite{khelkhal2025}.
+
+\subsection{Fairness in Algorithmic Hiring}
+
+Fairness concerns are central to resume screening. Fabris et al. survey bias sources across algorithmic hiring pipelines~\cite{fabris2025}. Webster argues that resume screening tools can create an ``illusion of neutrality'' when aggregate metrics hide poor treatment of specific groups~\cite{webster2025}. In this project, fairness is evaluated as category-level performance disparity rather than as a complete protected-attribute audit, because the Kaggle dataset provides job category labels but not demographic attributes.
+
+\subsection{Gap Addressed by This Project}
+
+Most prior systems focus on one task, such as extraction, retrieval, or final hiring recommendation. This project keeps the original idea of using structured resume profiles as a foundation for multiple downstream analyses: classification, association mining, clustering, and extraction validation. The goal is not to make an automatic hiring decision, but to study how a modular resume analysis pipeline behaves on a real dataset.
+
+\section{Data}
+
+\subsection{Dataset Source}
+
+We use the Kaggle Resume Dataset published by Snehaan Bhawal~\cite{bhawal2023}. The dataset contains 2,484 labeled resumes across 24 job categories. It is provided as a CSV file containing resume text and labels, along with a PDF archive organized by job category. The CSV source supports efficient model training and evaluation, while the PDF source supports extraction validation.
+
+\subsection{Dataset Statistics}
+
+Table~\ref{tab:dataset} summarizes the dataset used in the current repository. The latest real-data validation successfully matched 2,483 CSV/PDF resume pairs by resume identifier.
+
+\begin{table}[t]
+  \centering
+  \caption{Dataset summary statistics.}
+  \label{tab:dataset}
+  \small
+  \begin{tabular}{ll}
+    \toprule
+    \textbf{Attribute} & \textbf{Value} \\
+    \midrule
+    CSV resumes & 2,484 \\
+    PDF files in archive & 2,484 \\
+    Matched CSV/PDF validation pairs & 2,483 \\
+    Number of job categories & 24 \\
+    Data formats & CSV text strings + PDF files \\
+    Language & English \\
+    Classification split & 80\% train / 20\% test \\
+    Random seed & 42 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Dual Data Source Design}
+
+The project supports both CSV and PDF inputs. CSV processing is faster and is used for training and evaluation. PDF processing is slower because each file must be parsed, but it is closer to how resumes are commonly submitted. The validation command compares PDF extraction output against the CSV text source to measure how much information is preserved.
+
+\section{Methods}
+\label{sec:methods}
+
+\subsection{Pipeline Architecture}
+
+The system is implemented as a Python command-line pipeline with reusable modules. It also includes a local FastAPI dashboard that launches the same CLI commands and displays saved reports. The main processing flow is shown in Table~\ref{tab:method-pipeline}.
+
+\begin{table}[t]
+  \centering
+  \caption{Main processing stages in the implemented pipeline.}
+  \label{tab:method-pipeline}
+  \small
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{p{0.24\columnwidth}p{0.31\columnwidth}p{0.31\columnwidth}}
+    \toprule
+    \textbf{Stage} & \textbf{Input} & \textbf{Output} \\
+    \midrule
+    Text preparation & CSV text or PDF file & Cleaned resume text \\
+    Section parsing & Cleaned text & Skills, experience, education, projects \\
+    Skill extraction & Parsed sections & Explicit and implicit skill lists \\
+    Skill normalization & Raw skill lists & Canonical skill names \\
+    Feature generation & Canonical skills and text & Sparse ML feature matrices \\
+    Analysis & Features and labels & Models, rules, clusters, reports \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Logical Agent Components}
+
+We describe the system as five logical agents. These are not separate services; they are in-process components coordinated by the resume processor and CLI.
+
+\textbf{Section Parsing Agent.} This component uses regular expressions and heuristics to identify common resume sections such as skills, experience, education, and projects. Missing sections are represented with empty strings so that later pipeline stages can still run.
+
+\textbf{Skill Extraction Agent.} This component uses spaCy's \texttt{en\_core\_web\_sm} model and noun-phrase/entity heuristics to extract candidate skills. Skills from the skills section are treated as explicit skills, while skills inferred from experience and project text are treated as implicit skills.
+
+\textbf{Skill Normalization Agent.} This component maps raw skill mentions to canonical terms using a curated alias dictionary and RapidFuzz fuzzy matching with threshold 85. If no match is found, the cleaned original term is retained.
+
+\textbf{ATS Scoring Agent.} The scoring module includes an ATS-style keyword recall score between normalized resume skills and job requirements. This module is implemented, but it is not the main focus of the reported experiments.
+
+\textbf{Semantic Scoring Agent.} The scoring module also includes sentence-transformer similarity scoring. In the current CLI workflow, normal structured resume files still store \texttt{scores: null}; therefore, the reported experiments focus on classification, association mining, clustering, and validation instead of scoring-agent evaluation.
+
+\subsection{Feature Generation and Classification}
+
+The system builds a normalized-skill vocabulary and creates binary skill feature vectors. For classification, the current CLI compares two models using an 80/20 train-test split with random seed 42.
+
+\textbf{Baseline model.} The baseline uses raw resume text transformed with TF-IDF and classified using Logistic Regression. This model keeps broad contextual information such as job titles, responsibilities, tools, and domain-specific wording.
+
+\textbf{Proposed model.} The proposed model is a hybrid sparse model. It concatenates raw-text TF-IDF features with binary normalized-skill features and trains Logistic Regression on the combined feature matrix. This tests whether explicit normalized skill features improve classification beyond raw text alone.
+
+\subsection{Association Mining}
+
+Each resume's normalized skill list is treated as a transaction. Before mining, obvious resume header, contact, and location artifacts are removed. The Apriori algorithm is run using \texttt{mlxtend} with minimum support 0.1 and minimum confidence 0.5. We report the number of frequent itemsets and the final number of rules after confidence filtering.
+
+\subsection{Clustering}
+
+The repository exposes a \texttt{cluster} CLI command for both CSV and PDF sources. K-Means clustering is applied to binary normalized-skill vectors with $k=10$ from the configuration. The command writes an aggregate \texttt{cluster\_report.json} and per-resume \texttt{cluster\_assignments.json}. Cluster labels are cleaned to avoid obvious resume header/contact artifacts. We treat clustering as exploratory because the resulting clusters are highly imbalanced.
+
+\subsection{Evaluation Metrics}
+
+Classification is evaluated using accuracy, Macro F1, and per-category F1. Category-level F1 is used as a fairness diagnostic because a model can have acceptable aggregate accuracy while performing poorly for specific job categories. Cross-source extraction quality is evaluated using text similarity, skill overlap, and extraction accuracy. Clustering is evaluated using silhouette score and cluster-size distribution. Association mining is evaluated by frequent itemsets and rules at the configured thresholds.
+
+\section{Experiments and Results}
+\label{sec:experiments-results}
+
+\subsection{Experimental Setup}
+
+The latest real-data workflow ran the CLI commands \texttt{process-csv}, \texttt{process-pdf}, \texttt{train}, \texttt{evaluate}, \texttt{mine}, \texttt{cluster}, and \texttt{validate}. Generated outputs were saved under \texttt{output/}, while report-ready figures were generated from the JSON reports under \texttt{docs/figures/}.
+
+\subsection{Classification Performance}
+
+Table~\ref{tab:classification-performance} and Figure~\ref{fig:model-metrics} show the classification results. The TF-IDF baseline outperforms the proposed hybrid model. The baseline reaches 0.6258 accuracy and 0.5468 Macro F1, while the proposed hybrid model reaches 0.4165 accuracy and 0.3685 Macro F1.
+
+\begin{table}[t]
+    \centering
+    \caption{Classification performance on the Kaggle Resume Dataset using an 80/20 train-test split with random seed 42.}
+    \label{tab:classification-performance}
+    \small
+    \begin{tabular}{lcc}
+        \toprule
+        \textbf{Model} & \textbf{Accuracy} & \textbf{Macro F1} \\
+        \midrule
+        TF-IDF + Logistic Regression & \textbf{0.6258} & \textbf{0.5468} \\
+        Hybrid Text + Skill Logistic Regression & 0.4165 & 0.3685 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{model_metrics.png}
+    \caption{Overall classification metrics. The raw-text baseline outperforms the proposed hybrid text-plus-skill model.}
+    \label{fig:model-metrics}
+\end{figure}
+
+This result suggests that raw resume text contains useful signals that the current skill extraction pipeline does not fully preserve. Job category prediction depends not only on explicit skills, but also on job titles, responsibilities, industry phrases, certifications, and context.
+
+\subsection{Category-Level Fairness Diagnostic}
+
+The proposed hybrid model has mean per-category F1 of 0.3685 with standard deviation 0.1870. Five categories were flagged as low-performing: \textsc{Agriculture}, \textsc{Apparel}, \textsc{Arts}, \textsc{BPO}, and \textsc{Consultant}. Table~\ref{tab:category-f1} lists representative high-performing and flagged categories, and Figure~\ref{fig:category-f1} shows the full per-category comparison.
+
+\begin{table}[t]
+    \centering
+    \caption{Selected proposed-model per-category F1 results. Flagged categories are more than one standard deviation below the mean.}
+    \label{tab:category-f1}
+    \small
+    \begin{tabular}{lc}
+        \toprule
+        \textbf{Category} & \textbf{F1 Score / Status} \\
+        \midrule
+        CHEF & 0.7391 \\
+        CONSTRUCTION & 0.6441 \\
+        ACCOUNTANT & 0.6182 \\
+        TEACHER & 0.5455 \\
+        INFORMATION-TECHNOLOGY & 0.5246 \\
+        \midrule
+        AGRICULTURE & Flagged low-performing \\
+        APPAREL & Flagged low-performing \\
+        ARTS & Flagged low-performing \\
+        BPO & Flagged low-performing \\
+        CONSULTANT & Flagged low-performing \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.9\textwidth]{category_f1_scores.png}
+    \caption{Per-category F1 scores for the baseline and proposed hybrid model. The variation shows why category-level diagnostics are needed in addition to aggregate accuracy.}
+    \label{fig:category-f1}
+\end{figure*}
+
+The flagged categories do not prove demographic bias because this dataset does not include protected attributes. However, they do show uneven performance across job categories. In a real screening context, this kind of disparity would need more careful auditing before deployment.
+
+\subsection{Association Mining}
+
+Association mining was applied to 2,482 non-empty cleaned transactions. At minimum support 0.1, Apriori found 21 frequent itemsets. After applying the configured confidence threshold of 0.5, the final rule count was zero. Figure~\ref{fig:association-summary} summarizes this result.
+
+\begin{table}[t]
+    \centering
+    \caption{Association mining summary on cleaned skill transactions.}
+    \label{tab:association-summary}
+    \small
+    \begin{tabular}{lc}
+        \toprule
+        \textbf{Metric} & \textbf{Value} \\
+        \midrule
+        Non-empty transactions & 2,482 \\
+        Minimum support & 0.1 \\
+        Minimum confidence & 0.5 \\
+        Frequent itemsets before confidence filtering & 21 \\
+        Final association rules & 0 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{association_summary.png}
+    \caption{Association mining found frequent itemsets, but no rules met the configured confidence threshold.}
+    \label{fig:association-summary}
+\end{figure}
+
+This is a negative but useful result. The dataset spans 24 broad job categories, so skill combinations that are meaningful inside one category may not be frequent or confident enough across the entire corpus. A likely future improvement is to mine associations within each job category rather than across all resumes at once.
+
+\subsection{Clustering Results}
+
+The clustering command was run on both CSV and PDF sources using $k=10$. Table~\ref{tab:clustering} summarizes the results. Both sources produced one dominant cluster and several singleton or near-singleton clusters. The low silhouette scores indicate weak separation, so clustering should be interpreted as exploratory rather than as strong candidate segmentation.
+
+\begin{table}[t]
+  \centering
+  \caption{K-Means clustering results for CSV and PDF sources.}
+  \label{tab:clustering}
+  \small
+  \begin{tabular}{lcc}
+    \toprule
+    \textbf{Metric} & \textbf{CSV} & \textbf{PDF} \\
+    \midrule
+    Samples clustered & 2,484 & 2,483 \\
+    Requested clusters & 10 & 10 \\
+    Actual clusters & 10 & 10 \\
+    Silhouette score & 0.1024 & 0.1620 \\
+    Largest cluster size & 1,486 & 1,788 \\
+    Singleton clusters & 6 & 7 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{cluster_size_distribution.png}
+    \caption{PDF cluster size distribution. The log scale makes the cluster imbalance visible while still showing singleton clusters.}
+    \label{fig:cluster-size}
+\end{figure}
+
+The dominant-cluster pattern is consistent with binary skill vectors. Many resumes share common general skills such as management, communication, Microsoft Office, customer service, and team experience. These common terms can pull many resumes toward the same centroid. More distinctive clustering may require TF-IDF weighting, dense skill embeddings, or per-category clustering.
+
+\subsection{Cross-Source Validation}
+
+Cross-source validation compared 2,483 matched CSV/PDF resume pairs. Table~\ref{tab:cross-source-validation} and Figure~\ref{fig:validation} show the results. PDF text extraction closely matches the CSV text, but skill overlap is lower, showing that most information loss occurs during skill extraction and normalization rather than during PDF text extraction.
+
+\begin{table}[t]
+    \centering
+    \caption{Cross-source validation between CSV resume text and PDF-extracted resume text.}
+    \label{tab:cross-source-validation}
+    \small
+    \begin{tabular}{lc}
+        \toprule
+        \textbf{Metric} & \textbf{Value} \\
+        \midrule
+        Matched CSV/PDF pairs & 2,483 \\
+        Text similarity & $0.9979 \pm 0.0172$ \\
+        Skill overlap & $0.7575 \pm 0.1633$ \\
+        Extraction accuracy & 0.8777 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{validation_metrics.png}
+    \caption{CSV/PDF validation metrics. Text extraction is highly reliable, while skill overlap is lower and more variable.}
+    \label{fig:validation}
+\end{figure}
+
+\section{Discussion}
+
+\subsection{Why the Baseline Performs Better}
+
+The strongest finding is that raw TF-IDF features outperform the proposed hybrid features. This does not mean the skill pipeline is useless. Instead, it shows that the current extracted skill representation does not add enough clean signal to beat raw text. The raw text contains job titles, domain phrases, responsibilities, and context that may be lost when resumes are reduced to skill tokens.
+
+The validation results support this explanation. PDF text similarity is 0.9979, but skill overlap is 0.7575. The extraction and normalization stages are therefore more lossy than the text extraction stage. Improving skill extraction quality is likely more important than changing the classifier alone.
+
+\subsection{Fairness and Reliability}
+
+The category-level F1 results show that aggregate accuracy can hide weak performance for specific job categories. Categories such as \textsc{Agriculture}, \textsc{Apparel}, \textsc{Arts}, \textsc{BPO}, and \textsc{Consultant} were flagged for low proposed-model performance. Since the dataset lacks demographic attributes, this is not a full fairness audit. Still, it is a useful reliability diagnostic for an automated screening system.
+
+\subsection{Limitations}
+
+Several limitations affect the results. First, the Kaggle dataset is one public dataset and may not represent all real hiring settings. Second, job category prediction is only a proxy task; real resume screening usually compares a candidate to a specific job description. Third, the skill extractor uses general NLP heuristics and a curated alias file rather than a complete professional skill ontology. Fourth, ATS and semantic scoring modules are implemented but are not integrated into the default CLI output, which currently stores \texttt{scores: null}. Finally, clustering and association mining are exploratory and should not be treated as hiring decisions.
+
+\section{Conclusion}
+
+We implemented and evaluated a modular resume screening and skill mining pipeline on the Kaggle Resume Dataset. The system processes CSV and PDF resumes, extracts and normalizes skills, trains classifiers, mines associations, clusters resumes, validates PDF extraction, and displays results through a local dashboard.
+
+The final results are mixed but useful. The CLI workflow runs end to end on the real dataset, and PDF extraction is reliable. However, the proposed hybrid classifier does not outperform the raw-text baseline, association mining finds no rules at the configured threshold, and clustering is highly imbalanced. These findings point to a clear next step: improve skill extraction and representation before relying on skill-based downstream models.
+
+Future work should integrate scoring into the default CLI outputs, test category-specific association mining, use stronger skill ontologies or embeddings, and evaluate candidate-job matching directly against job descriptions rather than only predicting broad resume categories.
+
+\begin{acks}
+The authors acknowledge the CSE 572 Data Mining course instructors at Arizona State University for their guidance throughout this project. This work uses the Kaggle Resume Dataset published by Snehaan Bhawal.
+\end{acks}
+
+\bibliographystyle{ACM-Reference-Format}
+\begin{thebibliography}{13}
+
+\bibitem{webster2025}
+K.~T.~Webster. 2025.
+\newblock Fairness Is Not Enough: Auditing Competence and Intersectional Bias
+  in AI-powered Resume Screening.
+
+\bibitem{vukadin2021}
+M.~Vukadin et al. 2021.
+\newblock Information extraction from free-form CV documents in multiple
+  languages.
+\newblock \emph{IEEE Access} 9, 84559--84575.
+
+\bibitem{senger2024}
+A.~Senger et al. 2024.
+\newblock Deep Learning-based Computational Job Market Analysis: A Survey on
+  Skill Extraction and Classification from Job Postings.
+\newblock In \emph{Proc. ACL}.
+
+\bibitem{bhawal2023}
+S.~Bhawal. 2023.
+\newblock Kaggle Resume Dataset.
+\newblock \url{https://www.kaggle.com/datasets/snehaanbhawal/resume-dataset}.
+
+\bibitem{malandri2025}
+L.~Malandri et al. 2025.
+\newblock SkiLLMo: Normalized ESCO Skill Extraction through Transformer Models.
+\newblock In \emph{Proc. ACM}, 1969--1976.
+
+\bibitem{luo2025}
+Y.~Luo et al. 2025.
+\newblock OneKE: A Dockerized Schema-Guided Knowledge Extraction System.
+\newblock In \emph{Proc. ACL}, 2871--2874.
+
+\bibitem{khelkhal2025}
+L.~Khelkhal and D.~Lanasri. 2025.
+\newblock Smart-Hiring: An Explainable end-to-end Pipeline for CV Information
+  Extraction and Job Matching.
+
+\bibitem{fofanah2026}
+I.~D.~Fofanah. 2026.
+\newblock The Algorithmic Barrier: Quantifying Artificial Frictional
+  Unemployment in Automated Recruitment Systems.
+
+\bibitem{resumeatlas2024}
+ResumeAtlas. 2024.
+\newblock ResumeAtlas: Revisiting Resume Classification with Large Language
+  Models.
+
+\bibitem{fabris2025}
+A.~Fabris et al. 2025.
+\newblock Fairness and Bias in Algorithmic Hiring: A Multidisciplinary Survey.
+\newblock \emph{ACM CSUR} 16, 1, 1--54.
+
+\bibitem{giabelli2021}
+A.~Giabelli et al. 2021.
+\newblock Skills2Graph: Processing Million Job Ads to Face the Job Skill
+  Mismatch Problem.
+\newblock In \emph{Proc. IJCAI}, 4984--4987.
+
+\bibitem{dastin2018}
+J.~Dastin. 2018.
+\newblock Amazon scraps secret AI recruiting tool that showed bias against
+  women.
+\newblock \emph{Reuters}.
+
+\bibitem{barducci2022}
+A.~Barducci et al. 2022.
+\newblock An end-to-end framework for information extraction from Italian
+  resumes.
+\newblock \emph{Expert Systems with Applications} 210, 118487.
+
+\end{thebibliography}
+
+\balance
+\end{document}
