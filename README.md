@@ -26,6 +26,7 @@ order:
 | [`docs/RESUME_PROCESSOR_ARCHITECTURE.md`](docs/RESUME_PROCESSOR_ARCHITECTURE.md) | How the resume processing pipeline is organized |
 | [`docs/API_DOCUMENTATION.md`](docs/API_DOCUMENTATION.md) | Developer-facing module and API notes |
 | [`docs/INTEGRATION_TESTS_GUIDE.md`](docs/INTEGRATION_TESTS_GUIDE.md) | Test coverage and integration test workflow |
+| [`docs/figures/README.md`](docs/figures/README.md) | Report figure captions and regeneration command |
 
 ## What The Project Does
 
@@ -44,6 +45,15 @@ It then:
 5. Mines frequent skill co-occurrence patterns.
 6. Clusters resumes based on extracted features.
 7. Compares PDF extraction output against CSV text as a validation check.
+
+## System Architecture
+
+The diagram below summarizes the submitted project structure: users run the
+CLI or optional local dashboard, data comes from the Kaggle CSV/PDF sources,
+the backend processing pipeline creates structured resume outputs, and the ML
+and data-mining steps generate reports.
+
+![High-level system architecture](assets/architecture.png)
 
 ## Dataset
 
@@ -219,6 +229,23 @@ These are the latest verified metrics from the current checked-in code on the
 Kaggle dataset. See [`docs/REAL_DATA_RESULTS.md`](docs/REAL_DATA_RESULTS.md) for
 the longer breakdown.
 
+### Visual Results Summary
+
+The figures below are generated from the real JSON reports under
+`output/reports/`. They are stored in [`docs/figures`](docs/figures) so the
+README can show the project results without committing generated model or
+dataset artifacts.
+
+![Model accuracy and macro F1 comparison](docs/figures/model_metrics.png)
+
+![Per-category F1 scores for the proposed model](docs/figures/category_f1_scores.png)
+
+![PDF extraction validation metrics](docs/figures/validation_metrics.png)
+
+![Cluster size distribution](docs/figures/cluster_size_distribution.png)
+
+![Association mining summary](docs/figures/association_summary.png)
+
 ### Classification
 
 | Model | Accuracy | Macro F1 |
@@ -284,10 +311,10 @@ Finding:
 - Skill extraction is less stable than raw text extraction, which is reflected
   in the lower skill-overlap score.
 
-### Report Figures
+### Regenerating Report Figures
 
-Report-ready PNG figures are available in [`docs/figures`](docs/figures).
-They are generated from the real JSON reports under `output/reports/` using:
+The embedded PNG figures are generated from the real JSON reports under
+`output/reports/` using:
 
 ```bash
 python scripts/generate_report_plots.py --reports-dir output/reports --output-dir docs/figures
@@ -322,6 +349,7 @@ multi_agent_resume_screening_project/
 |-- README.md
 `-- docs/
     |-- README.md
+    |-- figures/
     |-- REAL_DATA_RESULTS.md
     |-- CLI_REFERENCE.md
     |-- RESUME_PROCESSOR_ARCHITECTURE.md
